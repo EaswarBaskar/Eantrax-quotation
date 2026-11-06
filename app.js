@@ -821,7 +821,23 @@ window.app = {
             return [];
         };
 
-        const rawDocuments = toArray(payload.documents);
+        const rawDocuments = toArray(payload.documents).map(doc => {
+            if (doc && doc.totals) {
+                const adv = parseFloat(doc.totals.advance) || 0;
+                const grand = parseFloat(doc.totals.grandTotal) || (parseFloat(doc.total) || 0);
+                if (adv > 0) {
+                    if (doc.totals.balance === undefined || isNaN(doc.totals.balance)) {
+                        doc.totals.balance = Math.max(0, grand - adv);
+                    }
+                    if (doc.totals.balance <= 0.01) {
+                        doc.status = 'paid';
+                    } else if (doc.status === 'draft') {
+                        doc.status = doc.type === 'quotation' ? 'accepted' : 'invoiced';
+                    }
+                }
+            }
+            return doc;
+        });
         const rawClients = toArray(payload.clients);
         const rawCatalog = toArray(payload.catalog);
         const rawLeads = toArray(payload.crm?.leads);
@@ -1881,11 +1897,16 @@ window.app = {
 
         // --- 5 Stats ---
         const quotes = docs.filter(d => d.type === 'quotation');
-        const accepted = quotes.filter(q => ['accepted', 'invoiced', 'paid'].includes(q.status));
-        const pending  = quotes.filter(q => ['draft', 'sent', 'viewed', 'proforma'].includes(q.status));
+        const accepted = quotes.filter(q => ['accepted', 'invoiced', 'paid'].includes(q.status) || (q.totals && q.totals.advance > 0));
+        const pending  = quotes.filter(q => ['draft', 'sent', 'viewed', 'proforma'].includes(q.status) && (!q.totals || !q.totals.advance));
         const totalBusiness = docs.reduce((sum, d) => sum + (d.totals ? d.totals.grandTotal : d.total || 0), 0);
-        const outstandingDocs = docs.filter(d => !['paid', 'draft'].includes(d.status));
-        const outstanding = outstandingDocs.reduce((sum, d) => sum + (d.totals ? d.totals.grandTotal : d.total || 0), 0);
+        const outstandingDocs = docs.filter(d => !['paid', 'cancelled', 'rejected'].includes(d.status));
+        const outstanding = outstandingDocs.reduce((sum, d) => {
+            const bal = (d.totals && typeof d.totals.balance === 'number')
+                ? d.totals.balance
+                : Math.max(0, (d.totals ? d.totals.grandTotal : (d.total || 0)) - (d.totals?.advance || 0));
+            return sum + bal;
+        }, 0);
 
         const fmt = (n) => {
             if (n >= 100000) return currency + (n / 100000).toFixed(1) + 'L';
@@ -1915,6 +1936,9 @@ window.app = {
                 let label, dotClass;
                 if (doc.status === 'paid') {
                     label = `${typeLabel} <strong>${doc.id}</strong> paid &mdash; ${amtStr}`;
+                    dotClass = 'activity-dot-green';
+                } else if (doc.totals && doc.totals.advance > 0) {
+                    label = `${typeLabel} <strong>${doc.id}</strong> advance paid &mdash; ${fmt(doc.totals.advance)} (Bal: ${fmt(doc.totals.balance)})`;
                     dotClass = 'activity-dot-green';
                 } else if (doc.status === 'accepted') {
                     label = `${typeLabel} <strong>${doc.id}</strong> accepted &mdash; ${amtStr}`;
@@ -2739,11 +2763,15 @@ ${company}`;
             doc.status = 'paid';
         } else if (doc.type === 'invoice' && doc.status === 'paid' && doc.totals.balance > 0) {
             doc.status = 'pending';
+        } else if (amount > 0 && (doc.status === 'draft' || doc.status === 'sent' || doc.status === 'viewed')) {
+            // Once advance payment is recorded, quotation/invoice is accepted by client
+            doc.status = doc.type === 'quotation' ? 'accepted' : 'invoiced';
         }
 
         if (!this.saveData()) return;
         this.closeModal('payment-modal');
         this.renderDocumentsList();
+        this.renderDashboard();
 
         const currency = this.data.settings.currency || '\u20B9';
         const modeIcon = { 'Cash': 'Cash', 'UPI': 'UPI', 'Bank Transfer': 'Bank', 'Cheque': 'Cheque' }[paymentMode] || 'Payment';
@@ -2813,37 +2841,91 @@ ${company}`;
     // --- Visualization & Utils ---
 
     renderDashboard() {
-        const docs = this.data.documents;
+        const docs = this.data.documents || [];
 
-        // Revenue = Everything that is PAID (Quotes or Invoices)
-        const revenue = docs.filter(d => d.status === 'paid')
-            .reduce((sum, d) => sum + (d.totals ? d.totals.grandTotal : d.total || 0), 0);
-
-        // Pending = anything not yet paid (sent, viewed, accepted, invoiced, overdue, pending)
+        const isSupersededQuote = (d) => d.type === 'quotation' && (d.status === 'invoiced' || docs.some(inv => inv.linkedQuote === d.id));
         const PENDING_STATUSES = ['sent', 'viewed', 'accepted', 'invoiced', 'proforma', 'overdue', 'pending'];
-        const pendingValue = docs.filter(d => PENDING_STATUSES.includes(d.status))
-            .reduce((sum, d) => sum + (d.totals ? d.totals.grandTotal : d.total || 0), 0);
 
-        const paidCount = docs.filter(d => d.status === 'paid').length;
-        const draftCount = docs.filter(d => d.status === 'draft').length;
-        const overdueCount = docs.filter(d => d.status === 'overdue').length;
+        // Advance payment revenue collected on active non-paid documents
+        let advanceRevenue = 0;
+
+        // Revenue = Everything PAID (full amount) + Advance payments received on active docs
+        const revenue = docs.filter(d => d.status !== 'cancelled' && d.status !== 'rejected')
+            .reduce((sum, d) => {
+                if (isSupersededQuote(d)) return sum;
+                if (d.status === 'paid') {
+                    return sum + (d.totals ? d.totals.grandTotal : (d.total || 0));
+                }
+                const adv = (d.totals && d.totals.advance) ? d.totals.advance : 0;
+                if (adv > 0) {
+                    advanceRevenue += adv;
+                    return sum + adv;
+                }
+                return sum;
+            }, 0);
+
+        // Pending = remaining unpaid balance across all pending/active documents
+        const pendingValue = docs.filter(d => d.status !== 'paid' && d.status !== 'cancelled' && d.status !== 'rejected')
+            .reduce((sum, d) => {
+                if (isSupersededQuote(d)) return sum;
+                const isPending = PENDING_STATUSES.includes(d.status) || (d.totals && d.totals.advance > 0);
+                if (!isPending) return sum;
+                const bal = d.totals && typeof d.totals.balance === 'number'
+                    ? d.totals.balance
+                    : Math.max(0, (d.totals ? d.totals.grandTotal : (d.total || 0)) - (d.totals?.advance || 0));
+                return sum + bal;
+            }, 0);
+
+        const paidCount = docs.filter(d => d.status === 'paid' && !isSupersededQuote(d)).length;
+        const draftCount = docs.filter(d => d.status === 'draft' && (!d.totals || !d.totals.advance) && !isSupersededQuote(d)).length;
+        const overdueCount = docs.filter(d => d.status === 'overdue' && !isSupersededQuote(d)).length;
         const totalInvoices = docs.filter(d => d.type === 'invoice').length;
 
-        // Profit Calculation (Paid Revenue - Expenses of Paid Docs)
-        const totalExpenses = docs.filter(d => d.status === 'paid')
-            .reduce((sum, d) => sum + (d.expense || 0), 0);
+        // Profit Calculation (Collected Revenue - Incurred Expenses)
+        const totalExpenses = docs.filter(d => d.status !== 'cancelled' && d.status !== 'rejected')
+            .reduce((sum, d) => {
+                if (isSupersededQuote(d)) return sum;
+                const exp = d.expense || 0;
+                if (exp <= 0) return sum;
+                const grandTotal = d.totals ? d.totals.grandTotal : (d.total || 0);
+                if (d.status === 'paid') return sum + exp;
+                if (d.totals && d.totals.advance > 0 && grandTotal > 0) {
+                    const ratio = Math.min(1, d.totals.advance / grandTotal);
+                    return sum + (exp * ratio);
+                }
+                return sum;
+            }, 0);
         const profit = revenue - totalExpenses;
 
-        const currency = this.data.settings.currency;
+        const currency = this.data.settings.currency || '\u20B9';
         document.getElementById('total-revenue').textContent = currency + revenue.toFixed(2);
         document.getElementById('pending-payments').textContent = currency + pendingValue.toFixed(2);
         document.getElementById('total-paid').textContent = paidCount;
         document.getElementById('total-drafts').textContent = draftCount;
         document.getElementById('total-overdue').textContent = overdueCount;
 
+        const revSub = document.getElementById('total-revenue-sub');
+        if (revSub) {
+            if (advanceRevenue > 0) {
+                revSub.textContent = `Incl. ${currency}${advanceRevenue.toFixed(2)} advance`;
+                revSub.style.display = 'block';
+            } else {
+                revSub.style.display = 'none';
+            }
+        }
+
+        const pendSub = document.getElementById('pending-payments-sub');
+        if (pendSub) {
+            if (advanceRevenue > 0) {
+                pendSub.textContent = `Balance after advances`;
+                pendSub.style.display = 'block';
+            } else {
+                pendSub.style.display = 'none';
+            }
+        }
+
         if (document.getElementById('total-profit')) {
             document.getElementById('total-profit').textContent = currency + profit.toFixed(2);
-            // Color coding for profit
             document.getElementById('total-profit').style.color = profit >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
         } else {
             const totalInvoicesEl = document.getElementById('total-invoices');
@@ -2855,14 +2937,16 @@ ${company}`;
         tbody.innerHTML = '';
         recent.forEach(doc => {
             const tr = document.createElement('tr');
-            const currency = this.data.settings.currency;
             const clientName = doc.client ? doc.client.name : 'Unknown Client';
             const total = (doc.totals ? doc.totals.grandTotal : doc.total || 0);
+            const advSubtext = (doc.totals && doc.totals.advance > 0 && doc.status !== 'paid')
+                ? `<div style="font-size:0.72rem; color:#16a34a; font-weight:600; margin-top:2px;">Adv: ${currency}${doc.totals.advance.toFixed(2)}</div>`
+                : '';
             tr.innerHTML = `
                 <td>${doc.id}</td>
                 <td>${clientName}</td>
                 <td>${doc.date}</td>
-                <td>${currency}${parseFloat(total).toFixed(2)}</td>
+                <td>${currency}${parseFloat(total).toFixed(2)}${advSubtext}</td>
                 <td><span class="badge badge-${this.getStatusColor(doc.status)}">${doc.status}</span></td>
                 <td><button class="btn btn-outline" data-recent-pdf="${doc.id}"><i class="fa-solid fa-file-pdf"></i></button></td>
             `;
@@ -2884,7 +2968,7 @@ ${company}`;
     renderCharts() {
         const brandColor = this.data.settings.brandColor || '#3b82f6';
         this.renderSpecificChart('revenueChart', 'Revenue', ['paid'], brandColor);
-        this.renderSpecificChart('pendingChart', 'Pending', ['pending', 'overdue'], '#f59e0b');
+        this.renderSpecificChart('pendingChart', 'Pending', ['pending', 'overdue'], '#ffa34d');
     },
 
     renderSpecificChart(canvasId, label, statuses, baseColor) {
@@ -2896,7 +2980,38 @@ ${company}`;
         const timeframe = this.chartTimeframe || 'month';
         let labels = [];
         let dataPoints = [];
-        const currency = this.data.settings.currency || '\u20B9';
+        const isRevenue = (canvasId === 'revenueChart');
+
+        const docs = this.data.documents || [];
+        const isSupersededQuote = (d) => d.type === 'quotation' && (d.status === 'invoiced' || docs.some(inv => inv.linkedQuote === d.id));
+        const PENDING_STATUSES = ['sent', 'viewed', 'accepted', 'invoiced', 'proforma', 'overdue', 'pending'];
+
+        const getDocAmount = (doc) => {
+            if (doc.status === 'cancelled' || doc.status === 'rejected') return 0;
+            if (isSupersededQuote(doc)) return 0;
+
+            if (isRevenue) {
+                if (doc.status === 'paid') {
+                    return doc.totals ? doc.totals.grandTotal : (doc.total || 0);
+                }
+                return doc.totals && doc.totals.advance ? doc.totals.advance : 0;
+            } else {
+                // Pending
+                if (doc.status === 'paid') return 0;
+                const isPending = PENDING_STATUSES.includes(doc.status) || (doc.totals && doc.totals.advance > 0);
+                if (!isPending) return 0;
+                return doc.totals && typeof doc.totals.balance === 'number'
+                    ? doc.totals.balance
+                    : Math.max(0, (doc.totals ? doc.totals.grandTotal : (doc.total || 0)) - (doc.totals?.advance || 0));
+            }
+        };
+
+        const getDocDate = (doc) => {
+            if (isRevenue && (doc.status === 'paid' || (doc.totals && doc.totals.advance > 0))) {
+                return doc.paymentDate || doc.date;
+            }
+            return doc.date;
+        };
 
         const now = new Date();
         now.setHours(23, 59, 59, 999);
@@ -2908,9 +3023,9 @@ ${company}`;
                 const dateStr = d.toISOString().split('T')[0];
                 labels.push(d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }));
 
-                const val = this.data.documents
-                    .filter(doc => statuses.includes(doc.status) && doc.date === dateStr)
-                    .reduce((sum, doc) => sum + (doc.totals ? doc.totals.grandTotal : doc.total || 0), 0);
+                const val = docs
+                    .filter(doc => getDocDate(doc) === dateStr)
+                    .reduce((sum, doc) => sum + getDocAmount(doc), 0);
                 dataPoints.push(val);
             }
         } else if (timeframe === 'week') {
@@ -2924,12 +3039,12 @@ ${company}`;
 
                 labels.push(`${weekStart.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}`);
 
-                const val = this.data.documents
+                const val = docs
                     .filter(doc => {
-                        const docDate = new Date(doc.date);
-                        return statuses.includes(doc.status) && docDate >= weekStart && docDate <= d;
+                        const targetDate = new Date(getDocDate(doc));
+                        return targetDate >= weekStart && targetDate <= d;
                     })
-                    .reduce((sum, doc) => sum + (doc.totals ? doc.totals.grandTotal : doc.total || 0), 0);
+                    .reduce((sum, doc) => sum + getDocAmount(doc), 0);
                 dataPoints.push(val);
             }
         } else {
@@ -2938,12 +3053,15 @@ ${company}`;
             labels = months;
             dataPoints = new Array(12).fill(0);
 
-            this.data.documents.forEach(doc => {
-                if (statuses.includes(doc.status)) {
-                    const date = new Date(doc.date);
-                    if (date.getFullYear() === currentYear) {
-                        const month = date.getMonth();
-                        dataPoints[month] += (doc.totals ? doc.totals.grandTotal : doc.total || 0);
+            docs.forEach(doc => {
+                const docAmt = getDocAmount(doc);
+                if (docAmt > 0) {
+                    const targetDate = new Date(getDocDate(doc));
+                    if (targetDate.getFullYear() === currentYear) {
+                        const month = targetDate.getMonth();
+                        if (month >= 0 && month < 12) {
+                            dataPoints[month] += docAmt;
+                        }
                     }
                 }
             });
@@ -3058,33 +3176,43 @@ ${company}`;
     },
 
     renderInvoiceStats() {
-        const docs = this.data.documents;
+        const docs = this.data.documents || [];
         const currency = this.data.settings.currency || '\u20B9';
-        const now = new Date();
-        const thisMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+        const isSupersededQuote = (d) => d.type === 'quotation' && (d.status === 'invoiced' || docs.some(inv => inv.linkedQuote === d.id));
 
-        // 1. Quoted Value (all quotations)
+        // 1. Quoted Value (all active quotations)
         const quotedValue = docs
-            .filter(d => d.type === 'quotation')
+            .filter(d => d.type === 'quotation' && d.status !== 'cancelled' && d.status !== 'rejected')
             .reduce((sum, d) => sum + (d.totals ? d.totals.grandTotal : d.total || 0), 0);
 
-        // 2. Invoiced (all invoices generated)
+        // 2. Invoiced (all active invoices generated)
         const invoicedAmount = docs
-            .filter(d => d.type === 'invoice')
+            .filter(d => d.type === 'invoice' && d.status !== 'cancelled' && d.status !== 'rejected')
             .reduce((sum, d) => sum + (d.totals ? d.totals.grandTotal : d.total || 0), 0);
 
-        // 3. Collected Revenue (actually paid)
+        // 3. Collected Revenue (paid full + advance payments received on active docs)
         const collectedRevenue = docs
-            .filter(d => d.status === 'paid')
-            .reduce((sum, d) => sum + (d.totals ? d.totals.grandTotal : d.total || 0), 0);
+            .filter(d => d.status !== 'cancelled' && d.status !== 'rejected')
+            .reduce((sum, d) => {
+                if (isSupersededQuote(d)) return sum;
+                if (d.status === 'paid') {
+                    return sum + (d.totals ? d.totals.grandTotal : (d.total || 0));
+                }
+                return sum + (d.totals && d.totals.advance ? d.totals.advance : 0);
+            }, 0);
 
-        // 4. Outstanding (invoiced but unpaid)
+        // 4. Outstanding (unpaid balance on invoices)
         const outstandingAmount = docs
-            .filter(d => d.type === 'invoice' && d.status !== 'paid')
-            .reduce((sum, d) => sum + (d.totals ? d.totals.grandTotal : d.total || 0), 0);
+            .filter(d => d.type === 'invoice' && d.status !== 'paid' && d.status !== 'cancelled' && d.status !== 'rejected')
+            .reduce((sum, d) => {
+                const bal = (d.totals && typeof d.totals.balance === 'number')
+                    ? d.totals.balance
+                    : Math.max(0, (d.totals ? d.totals.grandTotal : (d.total || 0)) - (d.totals?.advance || 0));
+                return sum + bal;
+            }, 0);
 
         // Format helper
-        const fmt = (n) => currency + (n || 0).toLocaleString('en-IN');
+        const fmt = (n) => currency + (n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
         const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
         set('iq-quoted', fmt(quotedValue));
@@ -3132,13 +3260,18 @@ ${company}`;
                 const total = (doc.totals ? doc.totals.grandTotal : doc.total || 0);
                 const statusColor = this.getStatusColor(doc.status);
                 const clientName = doc.client ? doc.client.name : 'Unknown Client';
+                const hasAdvance = doc.totals && doc.totals.advance > 0 && doc.status !== 'paid';
+                const advInfo = hasAdvance ? `
+                    <div style="font-size:0.75rem; color:#16a34a; font-weight:600; margin-top:2px;" title="Advance Paid">Paid: ${currency}${doc.totals.advance.toFixed(2)}</div>
+                    <div style="font-size:0.75rem; color:#ef4444; font-weight:600;" title="Remaining Balance">Bal: ${currency}${doc.totals.balance.toFixed(2)}</div>
+                ` : '';
 
                 tr.innerHTML = `
                     <td>${doc.id}</td>
                     <td>${doc.date}</td>
                     <td>${clientName}</td>
                     <td style="text-transform: capitalize">${doc.type}</td>
-                    <td style="font-weight: 700;">${currency}${parseFloat(total).toFixed(2)}</td>
+                    <td style="font-weight: 700;">${currency}${parseFloat(total).toFixed(2)}${advInfo}</td>
                     <td>
                         ${(() => {
                             const allowed = this.getAllowedTransitions(doc.status);
@@ -3203,10 +3336,12 @@ ${company}`;
                 if (!doc.totals) doc.totals = {};
                 doc.totals.balance = 0;
                 doc.totals.advance = doc.totals.grandTotal;
+                if (!doc.paymentDate) doc.paymentDate = new Date().toISOString().split('T')[0];
             }
 
             if (!this.saveData()) return;
             this.renderDocumentsList(); // Re-render to update badge colors
+            this.renderDashboard();
         }
     },
 
@@ -3245,20 +3380,22 @@ ${company}`;
         const newInvoice = JSON.parse(JSON.stringify(quote));
         newInvoice.type = 'invoice';
         newInvoice.id = 'INV-' + this.data.settings.nextInvoiceId;
-        newInvoice.status = 'pending';
+        newInvoice.status = (newInvoice.totals && newInvoice.totals.balance <= 0.01) ? 'paid' : 'pending';
         newInvoice.linkedQuote = id;
         newInvoice.date = new Date().toISOString().split('T')[0];
 
         // Update terms for Invoice to request full payment (replacing quote terms like "50% Advance")
         newInvoice.paymentTerms = "Full Payment Due upon Receipt";
 
-        // Preserve expense and advance from quote if any
-        // (JSON.stringify does this, but explicit check for clarity)
+        // Mark quote as invoiced so status progresses cleanly and avoids double counting
+        quote.status = 'invoiced';
+        quote.updated_at = new Date().toISOString();
 
         this.data.documents.unshift(newInvoice);
         this.data.settings.nextInvoiceId++;
         if (!this.saveData()) return;
         this.renderDocumentsList(); // Switch view
+        this.renderDashboard();
         this.showToast('Success', `Converted to Invoice ${newInvoice.id}. You can now record payments.`, 'success');
     },
 
@@ -3532,32 +3669,31 @@ ${company}`;
                             <span>Total</span>
                             <span style="font-variant-numeric: tabular-nums;">${currency}${doc.totals.grandTotal.toFixed(2)}</span>
                         </div>
-                        ${doc.type === 'quotation' ? (() => {
-                const half = (doc.totals.grandTotal / 2);
-                return `
-                        <div style="margin-top: 12px; border-top: 1px dashed #cbd5e1; padding-top: 10px;">
-                            <p style="font-size: 9px; text-transform: uppercase; color: #94a3b8; font-weight: 800; letter-spacing: 1px; margin: 0 0 7px 0;">Payment Schedule</p>
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 12px;">
-                                <span style="color: #475569;">50% to Start</span>
-                                <span style="color: #16a34a; font-weight: 700; font-variant-numeric: tabular-nums;">${currency}${half.toFixed(2)}</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
-                                <span style="color: #475569;">50% Before Live</span>
-                                <span style="color: #2563eb; font-weight: 700; font-variant-numeric: tabular-nums;">${currency}${half.toFixed(2)}</span>
-                            </div>
-                        </div>`;
-            })() : `
                         ${(doc.totals.advance > 0) ? `
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 12px; color: #64748b; border-top: 1px dashed #e2e8f0; padding-top: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 12px; color: #16a34a; border-top: 1px dashed #e2e8f0; padding-top: 8px;">
                             <span>Advance Paid</span>
-                            <span style="font-weight: 600; font-variant-numeric: tabular-nums;">-${currency}${doc.totals.advance.toFixed(2)}</span>
-                        </div>` : ''}
+                            <span style="font-weight: 700; font-variant-numeric: tabular-nums;">-${currency}${doc.totals.advance.toFixed(2)}</span>
+                        </div>
                         ${(doc.totals.balance > 0.01 && doc.status !== 'paid') ? `
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 14px; color: #ef4444; font-weight: 800;">
                             <span>Balance Due</span>
                             <span style="font-variant-numeric: tabular-nums;">${currency}${doc.totals.balance.toFixed(2)}</span>
                         </div>` : ''}
-                        `}
+                        ` : (doc.type === 'quotation' ? (() => {
+                            const half = (doc.totals.grandTotal / 2);
+                            return `
+                            <div style="margin-top: 12px; border-top: 1px dashed #cbd5e1; padding-top: 10px;">
+                                <p style="font-size: 9px; text-transform: uppercase; color: #94a3b8; font-weight: 800; letter-spacing: 1px; margin: 0 0 7px 0;">Payment Schedule</p>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 12px;">
+                                    <span style="color: #475569;">50% to Start</span>
+                                    <span style="color: #16a34a; font-weight: 700; font-variant-numeric: tabular-nums;">${currency}${half.toFixed(2)}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
+                                    <span style="color: #475569;">50% Before Live</span>
+                                    <span style="color: #2563eb; font-weight: 700; font-variant-numeric: tabular-nums;">${currency}${half.toFixed(2)}</span>
+                                </div>
+                            </div>`;
+                        })() : '')}
                     </div>
                 </div>
 
