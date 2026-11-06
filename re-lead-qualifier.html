@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RE Lead Qualifier</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f4f5f7;
+    --surface: #f8f9fa;
+    --card: #ffffff;
+    --border: #eaebed;
+    --accent: #d4fd02;
+    --green: #2bb854;
+    --red: #ef4444;
+    --orange: #ffa34d;
+    --blue: #3b82f6;
+    --text: #18191b;
+    --muted: #6e737c;
+    --font: 'Plus Jakarta Sans', sans-serif;
+    --mono: 'Share Tech Mono', monospace;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    color: var(--accent);
+  }
+  .logo span { color: var(--text); }
+  .stats-bar {
+    display: flex;
+    gap: 20px;
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .stat-num {
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .s-green { color: var(--green); }
+  .s-red { color: var(--red); }
+  .s-orange { color: var(--orange); }
+  .s-blue { color: var(--blue); }
+  .s-accent { color: var(--accent); }
+
+  /* LAYOUT */
+  .app {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    height: calc(100vh - 61px);
+  }
+
+  /* LEFT PANEL */
+  .panel-left {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: var(--mono);
+    padding: 18px 20px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .form-area {
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  label {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  input, select, textarea {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 9px 12px;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+  }
+  select option { background: var(--card); }
+  textarea { resize: none; height: 60px; }
+
+  .website-row {
+    display: grid;
+    grid-template-columns: 1fr 110px;
+    gap: 8px;
+  }
+
+  .btn-add {
+    background: var(--accent);
+    color: #000;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 11px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    letter-spacing: 0.3px;
+  }
+  .btn-add:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn-add:active { transform: translateY(0); }
+
+  /* QUICK TIPS */
+  .quick-tips {
+    padding: 14px 20px;
+    flex: 1;
+    overflow-y: auto;
+  }
+  .tips-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-bottom: 12px;
+  }
+  .tip {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: flex-start;
+  }
+  .tip-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .tip-text { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .tip-text strong { color: var(--text); }
+
+  /* RIGHT PANEL */
+  .panel-right {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* FILTERS */
+  .filter-bar {
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 14px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.5px;
+  }
+  .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+
+  .spacer { flex: 1; }
+  .btn-export {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-export:hover { color: var(--text); border-color: var(--text); }
+
+  /* LEAD LIST */
+  .lead-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .lead-list::-webkit-scrollbar { width: 4px; }
+  .lead-list::-webkit-scrollbar-track { background: transparent; }
+  .lead-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 12px;
+    color: var(--muted);
+  }
+  .empty-icon { font-size: 48px; opacity: 0.3; }
+  .empty-text { font-size: 14px; }
+
+  /* LEAD CARD */
+  .lead-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: start;
+    transition: border-color 0.15s, transform 0.1s;
+    animation: slideIn 0.2s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .lead-card:hover { border-color: #3a4050; transform: translateY(-1px); }
+  .lead-card.status-no_website { border-left: 3px solid var(--red); }
+  .lead-card.status-bad_website { border-left: 3px solid var(--orange); }
+  .lead-card.status-outdated_website { border-left: 3px solid var(--blue); }
+  .lead-card.status-good_website { border-left: 3px solid var(--green); }
+  .lead-card.status-contacted { border-left: 3px solid var(--muted); }
+
+  .lead-main {}
+  .lead-name {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .lead-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    margin-bottom: 8px;
+  }
+  .meta-item {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .meta-item a { color: var(--blue); text-decoration: none; }
+  .meta-item a:hover { text-decoration: underline; }
+
+  .lead-notes {
+    font-size: 12px;
+    color: var(--muted);
+    font-style: italic;
+    margin-top: 4px;
+  }
+
+  .lead-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
+  }
+
+  .status-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 100px;
+    letter-spacing: 0.8px;
+    white-space: nowrap;
+  }
+  .badge-no_website { background: rgba(255,92,92,0.15); color: var(--red); }
+  .badge-bad_website { background: rgba(255,159,67,0.15); color: var(--orange); }
+  .badge-outdated_website { background: rgba(92,159,255,0.15); color: var(--blue); }
+  .badge-good_website { background: rgba(61,220,132,0.15); color: var(--green); }
+  .badge-contacted { background: rgba(107,114,128,0.15); color: var(--muted); }
+
+  .btn-delete {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--mono);
+  }
+  .btn-delete:hover { border-color: var(--red); color: var(--red); }
+
+  .btn-mark {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--mono);
+    white-space: nowrap;
+  }
+  .btn-mark:hover { border-color: var(--green); color: var(--green); }
+
+  .btn-email {
+    display: inline-flex;
+    align-items: center;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--blue);
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--mono);
+    white-space: nowrap;
+    text-decoration: none;
+  }
+  .btn-email:hover { background: rgba(92,159,255,0.1); border-color: var(--blue); }
+
+  .btn-pitch {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--accent);
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--mono);
+    white-space: nowrap;
+  }
+  .btn-pitch:hover { background: rgba(245,200,66,0.1); border-color: var(--accent); }
+
+  /* PRIORITY LABEL */
+  .priority-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin-right: 5px;
+  }
+  .p-high { background: var(--red); }
+  .p-medium { background: var(--orange); }
+  .p-low { background: var(--muted); }
+
+  /* SCROLLBAR */
+  .quick-tips::-webkit-scrollbar { width: 3px; }
+  .quick-tips::-webkit-scrollbar-track { background: transparent; }
+  .quick-tips::-webkit-scrollbar-thumb { background: var(--border); }
+
+  /* PROMPTS TOOLKIT */
+  .prompt-section { margin-top: 20px; border-top: 1px dashed var(--border); padding-top: 18px; }
+  .prompt-group { margin-bottom: 14px; }
+  .prompt-group-title { font-size: 10px; color: var(--accent); font-family: var(--mono); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .prompt-box { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; font-size: 11px; margin-bottom: 8px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .prompt-text { flex: 1; font-style: italic; color: var(--muted); line-height: 1.4; }
+  .btn-copy { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: var(--mono); font-size: 9px; padding: 5px 8px; border-radius: 4px; cursor: pointer; transition: all 0.15s; text-transform: uppercase; flex-shrink: 0; }
+  .btn-copy:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-copy.copy-success { background: var(--green); color: #000; border-color: var(--green); }
+  .niche-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .niche-tag { font-size: 10px; font-family: var(--mono); color: var(--muted); background: var(--bg); padding: 4px 10px; border-radius: 100px; border: 1px solid var(--border); cursor: default; }
+
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+
+  /* RESPONSIVE */
+  @media (max-width: 800px) {
+    .app {
+      grid-template-columns: 1fr;
+      height: auto;
+    }
+    .panel-left {
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">LEAD<span>SCANNER</span> <span style="color:var(--muted);font-size:12px;font-weight:400;">Texas RE</span></div>
+  <div class="stats-bar">
+    <div class="stat"><span class="stat-num s-accent" id="cnt-total">0</span><span class="stat-label">Total</span></div>
+    <div class="stat"><span class="stat-num s-red" id="cnt-no">0</span><span class="stat-label">No Site</span></div>
+    <div class="stat"><span class="stat-num s-orange" id="cnt-bad">0</span><span class="stat-label">Bad Site</span></div>
+    <div class="stat"><span class="stat-num s-blue" id="cnt-old">0</span><span class="stat-label">Outdated</span></div>
+    <div class="stat"><span class="stat-num s-green" id="cnt-good">0</span><span class="stat-label">Good</span></div>
+  </div>
+</header>
+
+<div class="app">
+  <!-- LEFT: INPUT FORM -->
+  <div class="panel-left">
+    <div class="panel-title" style="color:var(--blue);">🚀 Auto Scan Leads</div>
+    <div class="form-area" style="background:var(--bg); border-bottom: 3px solid var(--border);">
+      <div class="field">
+        <label for="as-method">Data Source</label>
+        <select id="as-method" onchange="document.getElementById('apify-token-container').style.display = this.value === 'apify' ? 'flex' : 'none'">
+          <option value="osm">OpenStreetMap (Fast, Basic Data)</option>
+          <option value="apify">Apify Google Maps (Deep, Needs Key)</option>
+        </select>
+      </div>
+      <div class="field" id="apify-token-container" style="display: none;">
+        <label for="as-apify-token">Apify API Token</label>
+        <input type="password" id="as-apify-token" placeholder="Enter your Apify API Token" />
+      </div>
+
+      <div class="field">
+        <label for="as-region">1. Target Foreign Market</label>
+        <select id="as-region" onchange="updateCityDropdown()">
+          <option value="in_tn">India – Tamil Nadu 🇮🇳</option>
+          <option value="in_ka">India – Karnataka 🇮🇳</option>
+          <option value="in_mh">India – Maharashtra 🇮🇳</option>
+          <option value="in_ap">India – Andhra Pradesh 🇮🇳</option>
+          <option value="in_ts">India – Telangana 🇮🇳</option>
+          <option value="in_kl">India – Kerala 🇮🇳</option>
+          <option value="us">United States (High Budget)</option>
+          <option value="ca">Canada (Medium-High Budget)</option>
+          <option value="uk">United Kingdom (Medium Budget)</option>
+          <option value="au">Australia (High Budget)</option>
+          <option value="ae">UAE / Dubai (Premium Budget)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="as-city">2. Target City / Area</label>
+        <select id="as-city">
+          <!-- Populated by JS -->
+        </select>
+      </div>
+      <div class="field">
+        <label for="as-niche">Niche Industry</label>
+        <select id="as-niche">
+          <option value="__all__">🌍 All Niches — Scan Everything</option>
+          <option disabled>─────────────────────</option>
+          <option value="web design">Web Design Clients (No/Bad Website)</option>
+          <option value="estate_agent">Real Estate Agents</option>
+          <option value="property_developer">Real Estate Developers</option>
+          <option value="manufacturer">Manufacturers &amp; Factories</option>
+          <option value="industrial_supplier">Industrial Suppliers / Distributors</option>
+          <option value="b2b_vendor">Manufacturing Suppliers / B2B Vendors</option>
+          <option value="it_company">IT Companies / Software Companies</option>
+          <option value="digital_marketing">Digital Marketing Agencies</option>
+          <option value="consulting">Consulting Firms</option>
+          <option value="accountant">Chartered Accountants / Tax Consultants</option>
+          <option value="financial">Financial Consultants / Insurance Agencies</option>
+          <option value="lawyer">Lawyers &amp; Law Firms</option>
+          <option value="engineer">Engineering Companies</option>
+          <option value="architect">Architects</option>
+          <option value="interior_design">Interior Designers</option>
+          <option value="construction">Construction Companies &amp; Builders</option>
+          <option value="renewable_energy">Renewable Energy / Solar Companies</option>
+          <option value="logistics">Logistics &amp; Transport Companies</option>
+          <option value="exporters">Exporters &amp; Importers</option>
+          <option value="security">Security Companies</option>
+          <option value="recruitment">Recruitment / Staffing Agencies</option>
+          <option value="training">Training &amp; Coaching Institutes</option>
+          <option value="coworking">Coworking Spaces</option>
+          <option value="travel">Travel Agencies / Tour Operators</option>
+          <option value="event_management">Event Management Companies</option>
+          <option value="wedding_planner">Wedding Planners</option>
+          <option value="banquet_hall">Wedding Venues / Banquet Halls</option>
+          <option value="hospital">Hospitals &amp; Clinics</option>
+          <option value="dentist">Dentists</option>
+          <option value="hotel">Hotels &amp; Resorts</option>
+          <option value="school">Schools &amp; Colleges</option>
+          <option value="ngo">NGOs / Foundations</option>
+          <option value="gym">Gyms &amp; Fitness Centers</option>
+          <option value="car_repair">Auto Repair &amp; Mechanics</option>
+        </select>
+      </div>
+      <button class="btn-add" id="btn-scan" style="background:var(--blue); color:#fff; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="autoScan()">
+        <span>📡</span> START AUTO SCAN
+      </button>
+      <div id="scan-status" style="font-size:11px; color:var(--muted); font-family:var(--mono); margin-top:5px; display:none; text-align:center;"></div>
+    </div>
+
+    <div class="panel-title">Add Lead Manually</div>
+    <div class="form-area">
+      <div class="field">
+        <label for="f-name">Agent / Business Name *</label>
+        <input type="text" id="f-name" placeholder="e.g. John Smith Realty" />
+      </div>
+      <div class="field">
+        <label for="f-phone">Phone</label>
+        <input type="text" id="f-phone" placeholder="(512) 000-0000" />
+      </div>
+      <div class="field">
+        <label for="f-city">City / Area</label>
+        <input type="text" id="f-city" placeholder="e.g. Austin, TX" />
+      </div>
+      <div class="field">
+        <label for="f-website">Website Status *</label>
+        <div class="website-row">
+          <input type="text" id="f-website" placeholder="website.com or leave blank" />
+          <select id="f-status">
+            <option value="no_website">❌ No Site</option>
+            <option value="bad_website">⚠️ Bad Site</option>
+            <option value="outdated_website">🕒 Outdated</option>
+            <option value="good_website">✅ Good</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-notes">Notes</label>
+        <textarea id="f-notes" placeholder="e.g. site looks like 2010, no mobile version..."></textarea>
+      </div>
+      <button class="btn-add" id="btn-add-main" onclick="addLead()">+ ADD LEAD</button>
+    </div>
+
+    <div class="quick-tips">
+      <div class="tips-title">🎯 What to Look For</div>
+      <div class="tip"><span class="tip-icon">❌</span><div class="tip-text"><strong>No Website</strong> — Best leads. They need you most. Check if GMB has only a phone number.</div></div>
+      <div class="tip"><span class="tip-icon">⚠️</span><div class="tip-text"><strong>Bad Website</strong> — Broken links, no SSL (http://), ugly design, not mobile-friendly.</div></div>
+      <div class="tip"><span class="tip-icon">🕒</span><div class="tip-text"><strong>Outdated</strong> — Copyright says 2015–2020, listings not updated, old phone/address.</div></div>
+      <div class="tip"><span class="tip-icon">📍</span><div class="tip-text"><strong>Speed tip</strong> — Open 10 GMB tabs at once, scan each for website link. No link = instant lead.</div></div>
+      <div class="tip"><span class="tip-icon">⭐</span><div class="tip-text"><strong>Bonus</strong> — Agents with 4+ stars but bad web presence = highly motivated prospects.</div></div>
+      <div class="tip"><span class="tip-icon">📞</span><div class="tip-text"><strong>Reach out</strong> — Mention you found them on Google Maps and noticed their web presence needs work. Very specific = higher reply rate.</div></div>
+      
+      <!-- NEW: PROMPTS TOOLKIT -->
+      <div class="prompt-section">
+        <div class="tips-title" style="margin-bottom: 16px;">📋 Search Prompts</div>
+        
+        <div class="prompt-group">
+          <div class="prompt-group-title">Map Search (Ask Maps)</div>
+          <div class="prompt-box">
+            <div class="prompt-text">"Show me real estate agents in [City, Country] who have no website or outdated website. List their business name, phone number, address and website if available."</div>
+            <button class="btn-copy" onclick="copyPrompt(this)">Copy</button>
+          </div>
+        </div>
+
+        <div class="prompt-group">
+          <div class="prompt-group-title">Bulk Search (Google)</div>
+          <div class="prompt-box">
+            <div class="prompt-text">"real estate agents in [City] [Country] with no website contact details phone number"</div>
+            <button class="btn-copy" onclick="copyPrompt(this)">Copy</button>
+          </div>
+        </div>
+
+        <div class="prompt-group">
+          <div class="prompt-group-title">Top Country Targets</div>
+          <div class="prompt-box">
+            <div class="prompt-text">"Real estate agents Lubbock Texas no website phone number address list"</div>
+            <button class="btn-copy" onclick="copyPrompt(this)">Copy</button>
+          </div>
+          <div class="prompt-box">
+            <div class="prompt-text">"Real estate brokers Brampton Ontario Canada no website contact details"</div>
+            <button class="btn-copy" onclick="copyPrompt(this)">Copy</button>
+          </div>
+          <div class="prompt-box">
+            <div class="prompt-text">"Estate agents Birmingham UK no website phone number"</div>
+            <button class="btn-copy" onclick="copyPrompt(this)">Copy</button>
+          </div>
+          <div class="prompt-box">
+            <div class="prompt-text">"Real estate agents Darwin Australia no website contact"</div>
+            <button class="btn-copy" onclick="copyPrompt(this)">Copy</button>
+          </div>
+          <div class="prompt-box">
+            <div class="prompt-text">"Real estate brokers Sharjah UAE no website phone"</div>
+            <button class="btn-copy" onclick="copyPrompt(this)">Copy</button>
+          </div>
+        </div>
+
+        <div class="prompt-group">
+          <div class="prompt-group-title">Power Tip: Swap Niches</div>
+          <div class="niche-tags">
+            <span class="niche-tag">plumbers</span>
+            <span class="niche-tag">dentists</span>
+            <span class="niche-tag">law firms</span>
+            <span class="niche-tag">restaurants</span>
+            <span class="niche-tag">hair salons</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- NEW: LEAD GENERATION AUTO -->
+      <div class="prompt-section">
+        <div class="tips-title" style="margin-bottom: 16px; color: var(--blue);">🔍 Lead Gen (AUTO)</div>
+        
+        <div class="prompt-group">
+          <div class="prompt-group-title">Goal</div>
+          <div style="font-size: 12px; color: var(--text); margin-bottom: 12px; line-height: 1.4;">Get new leads daily without manual work.</div>
+          
+          <div class="prompt-group-title">How to execute</div>
+          <div class="prompt-box" style="flex-direction: column; gap: 8px;">
+            <div style="font-size: 11px; color: var(--muted);">Use custom scrapers OR tools like:</div>
+            <div class="niche-tags" style="margin-bottom: 2px;">
+              <a href="https://apify.com/store" target="_blank" class="niche-tag" style="background: var(--surface); color: var(--text); border-color: var(--blue); text-decoration: none; transition: 0.2s;">Apify ↗</a>
+              <a href="https://outscraper.com/google-maps-scraper/" target="_blank" class="niche-tag" style="background: var(--surface); color: var(--text); border-color: var(--blue); text-decoration: none; transition: 0.2s;">Outscraper ↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="prompt-group">
+          <div class="prompt-group-title">Automation Flow</div>
+          <div class="prompt-box" style="display: block;">
+            <div style="font-size: 11px; color: var(--text); display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+               <span style="white-space: nowrap;">⏱️ Run daily</span> 
+               <span style="color:var(--muted);">&rarr;</span> 
+               <span style="color: var(--green); white-space: nowrap;">📊 Export to Google Sheets</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="prompt-group">
+          <div class="prompt-group-title">👉 Expected Output</div>
+          <div class="niche-tags">
+            <span class="niche-tag">Name</span>
+            <span class="niche-tag">Email</span>
+            <span class="niche-tag">Website</span>
+            <span class="niche-tag">Phone</span>
+            <span class="niche-tag">City</span>
+            <span class="niche-tag">Status</span>
+            <span class="niche-tag">Notes</span>
+            <span class="niche-tag">Maps Link</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: LEAD LIST -->
+  <div class="panel-right">
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+      <button class="filter-btn" onclick="setFilter('no_website', this)">❌ No Site</button>
+      <button class="filter-btn" onclick="setFilter('bad_website', this)">⚠️ Bad Site</button>
+      <button class="filter-btn" onclick="setFilter('outdated_website', this)">🕒 Outdated</button>
+      <button class="filter-btn" onclick="setFilter('good_website', this)">✅ Good</button>
+      <button class="filter-btn" onclick="setFilter('contacted', this)">📞 Contacted</button>
+      <div class="spacer"></div>
+      <button class="btn-export" onclick="clearAllLeads()" style="border-color:var(--red); color:var(--red);">Clear History</button>
+      <button class="btn-export" onclick="exportJSON()">Export JSON</button>
+      <button class="btn-export" onclick="exportCSV()">Export CSV</button>
+    </div>
+    <div class="lead-list" id="lead-list">
+      <div class="empty-state">
+        <div class="empty-icon">🗺️</div>
+        <div class="empty-text">Add your first lead from Google Maps</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const escapeHTML = (str) => {
+    if (!str) return '';
+    return String(str).replace(/[&<>'"]/g, tag => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+    }[tag] || tag));
+  };
+
+  let leads = JSON.parse(localStorage.getItem('re_leads') || '[]');
+  
+  // Data Migration: Correct any old leads marked 'outdated_website' just because they use http://
+  let needsSave = false;
+  leads.forEach(l => {
+    if (l.status === 'outdated_website' && l.website && l.website.startsWith('http://') && !l.website.includes('.business.site')) {
+      l.status = 'bad_website';
+      needsSave = true;
+    }
+  });
+  if (needsSave) {
+    localStorage.setItem('re_leads', JSON.stringify(leads));
+  }
+
+  let currentFilter = 'all';
+
+  const STATUS_LABELS = {
+    no_website: '❌ NO WEBSITE',
+    bad_website: '⚠️ BAD SITE',
+    outdated_website: '🕒 OUTDATED',
+    good_website: '✅ GOOD SITE',
+    contacted: '📞 CONTACTED'
+  };
+
+  const NICHES = {
+    'web design':          '(amenity~".|office~".")(if: is_tag("name"))',
+    'estate_agent':        'office="estate_agent"',
+    'property_developer':  'office~"property_management|real_estate_developer"',
+    'manufacturer':        'industrial="factory"',
+    'industrial_supplier': 'industrial="supplier"',
+    'b2b_vendor':          'shop="wholesale"',
+    'it_company':          'office="it"',
+    'digital_marketing':   'office~"advertising_agency|marketing"',
+    'consulting':          'office="consulting"',
+    'accountant':          'office~"accountant|tax_advisor"',
+    'financial':           'office~"financial|insurance"',
+    'lawyer':              'office="lawyer"',
+    'engineer':            'office="engineer"',
+    'architect':           'office="architect"',
+    'interior_design':     'office="interior_design"',
+    'construction':        'craft~"builder|construction"',
+    'renewable_energy':    'office="energy_supplier"',
+    'logistics':           'office="logistics"',
+    'exporters':           'office="logistics"',
+    'security':            'office="security"',
+    'recruitment':         'office="employment_agency"',
+    'training':            'office="educational_institution"',
+    'coworking':           'office="coworking"',
+    'travel':              'shop="travel_agency"',
+    'event_management':    'office="event_management"',
+    'wedding_planner':     'office="event_management"',
+    'banquet_hall':        'amenity="events_venue"',
+    'hospital':            'amenity="hospital"',
+    'dentist':             'amenity="dentist"',
+    'hotel':               'tourism="hotel"',
+    'school':              'amenity~"school|college|university"',
+    'ngo':                 'office~"ngo|foundation"',
+    'gym':                 'leisure="fitness_centre"',
+    'car_repair':          'shop="car_repair"'
+  };
+
+  // Robust Overpass endpoints to try in order
+  const OVERPASS_ENDPOINTS = [
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter',
+    'https://maps.mail.ru/osm/tools/overpass/api/interpreter'
+  ];
+
+  async function fetchOverpass(query) {
+    for (const endpoint of OVERPASS_ENDPOINTS) {
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: 'data=' + encodeURIComponent(query),
+          signal: AbortSignal.timeout(30000)
+        });
+        if (res.ok) return await res.json();
+      } catch(e) { /* try next endpoint */ }
+    }
+    throw new Error('All Overpass API endpoints failed. Check your internet connection.');
+  }
+
+  // Geocode city name to bounding box via Nominatim
+  async function geocodeCity(cityName) {
+    const cleanCity = cityName.split(',')[0].trim(); // "Chennai" from "Chennai, Tamil Nadu"
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cityName)}&format=json&limit=1&addressdetails=0`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+    if (!res.ok) throw new Error('Geocoding failed');
+    const results = await res.json();
+    if (!results.length) throw new Error(`City "${cleanCity}" not found on OpenStreetMap. Try a different city.`);
+    const { boundingbox } = results[0]; // [minlat, maxlat, minlon, maxlon]
+    return { bb: boundingbox, name: cleanCity };
+  }
+
+  async function autoScan() {
+    const method = document.getElementById('as-method') ? document.getElementById('as-method').value : 'osm';
+    const city = document.getElementById('as-city').value.trim();
+    const nicheKey = document.getElementById('as-niche').value;
+    const nicheText = document.getElementById('as-niche').options[document.getElementById('as-niche').selectedIndex].text;
+    
+    if (!city) { document.getElementById('as-city').focus(); return; }
+
+    const btn = document.getElementById('btn-scan');
+    const status = document.getElementById('scan-status');
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner" style="display:inline-block; animation:spin 1s linear infinite;">⏳</span> SCANNING...`;
+    status.style.display = 'block';
+
+    try {
+      if (method === 'apify') {
+        const token = document.getElementById('as-apify-token').value.trim();
+        if(!token) throw new Error('Apify API token is required.');
+
+        status.textContent = 'Starting Apify Google Maps Actor...';
+
+        let searchArray = [];
+        if (nicheKey === '__all__') {
+           const opts = document.getElementById('as-niche').options;
+           for (let i=0; i<opts.length; i++) {
+             if (opts[i].value && opts[i].value !== '__all__' && opts[i].value !== 'web design' && !opts[i].disabled) {
+               searchArray.push(`${opts[i].text} in ${city}`);
+             }
+           }
+        } else {
+           searchArray = [`${nicheText} in ${city}`];
+        }
+
+        const runRes = await fetch('https://api.apify.com/v2/acts/compass~crawler-google-places/runs?token=' + token, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            searchStringsArray: searchArray,
+            maxCrawledPlacesPerSearch: 15,
+            language: "en",
+            maxImages: 0,
+            maxReviews: 0,
+            scrapeReviewerName: false,
+            scrapeReviewUrl: false,
+            scrapeResponseFromOwnerText: false,
+            allPlacesNoSearchAction: ""
+          })
+        });
+        
+        if (!runRes.ok) throw new Error('Failed to start Apify run.');
+        const runData = await runRes.json();
+        const runId = runData.data.id;
+
+        status.textContent = 'Action running... (takes 30s-1m)';
+        let runStatus = 'RUNNING';
+        let statusCheckData;
+        
+        while (runStatus !== 'SUCCEEDED' && runStatus !== 'FAILED') {
+          await new Promise(r => setTimeout(r, 5000));
+          const checkRes = await fetch(`https://api.apify.com/v2/acts/compass~crawler-google-places/runs/${runId}?token=${token}`);
+          statusCheckData = await checkRes.json();
+          runStatus = statusCheckData.data.status;
+          if (runStatus === 'RUNNING') status.textContent = 'Still scraping places...';
+        }
+
+        if (runStatus !== 'SUCCEEDED') throw new Error('Apify run failed. Check API logs.');
+
+        status.textContent = 'Fetching results...';
+        const datasetId = statusCheckData.data.defaultDatasetId;
+        const dsRes = await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?token=${token}`);
+        const items = await dsRes.json();
+
+        let added = 0;
+        for (const el of items) {
+          if (!el.title) continue;
+          
+          const existName = leads.find(l => l.name.toLowerCase() === el.title.toLowerCase() && l.city.toLowerCase().includes(city.toLowerCase()));
+          if (existName) continue;
+
+          let siteStatus = 'no_website';
+          let website = el.website || '';
+          
+          if (website) {
+            if (website.includes('.business.site')) siteStatus = 'outdated_website';
+            else if (website.startsWith('http://') || website.includes('facebook') || website.includes('instagram')) siteStatus = 'bad_website';
+            else siteStatus = 'good_website';
+            
+            if (!website.startsWith('http')) website = 'https://' + website;
+          }
+
+          let score = el.totalScore ? `${el.totalScore}⭐` : 'No rating';
+          let revs = el.reviewsCount || 0;
+
+          const lead = {
+            id: Date.now() + Math.random(),
+            name: el.title,
+            phone: el.phoneUnformatted || el.phone || '',
+            city: el.city || city,
+            website: website,
+            status: siteStatus,
+            niche: nicheText,
+            notes: `Auto-scanned via Apify (${score}, ${revs} reviews).`,
+            addedAt: new Date().toLocaleDateString()
+          };
+          leads.unshift(lead);
+          added++;
+        }
+        
+        save();
+        render();
+        status.style.color = 'var(--green)';
+        status.textContent = `Apify scan complete! ✨ Added ${added} new leads.`;
+
+      } else {
+        // OSM via Overpass with Nominatim geocoding
+        const region = document.getElementById('as-region').value;
+        const isAllAreas = city === '__all__';
+        const citiesToScan = isAllAreas ? REGION_CITIES[region] : [city];
+        const totalCities = citiesToScan.length;
+        let grandTotal = 0;
+
+        for (let ci = 0; ci < citiesToScan.length; ci++) {
+          const currentCity = citiesToScan[ci];
+          const progressLabel = isAllAreas ? ` (${ci + 1}/${totalCities})` : '';
+          status.textContent = `🌐 Locating ${currentCity.split(',')[0]}...${progressLabel}`;
+
+          let bb, cleanCity;
+          try {
+            const geo = await geocodeCity(currentCity);
+            bb = geo.bb;
+            cleanCity = geo.name;
+          } catch(geoErr) {
+            status.textContent = `⚠️ Skipping ${currentCity.split(',')[0]}: not found.${progressLabel}`;
+            await new Promise(r => setTimeout(r, 800));
+            continue;
+          }
+
+          const [minLat, maxLat, minLon, maxLon] = bb;
+          const bbox = `${minLat},${minLon},${maxLat},${maxLon}`;
+
+          let osmQuery;
+          if (nicheKey === '__all__') {
+            let inner = '';
+            Object.values(NICHES).forEach(s => {
+              if (s.includes('is_tag')) return;
+              inner += `  node[${s}]["name"](${bbox});\n  way[${s}]["name"](${bbox});\n`;
+            });
+            osmQuery = `[out:json][timeout:90];\n(\n${inner});\nout center 60;`;
+          } else if (nicheKey === 'web design') {
+            osmQuery = `[out:json][timeout:30];
+(
+  node["name"]["amenity"](${bbox});
+  node["name"]["shop"](${bbox});
+  node["name"]["office"](${bbox});
+  way["name"]["amenity"](${bbox});
+  way["name"]["shop"](${bbox});
+  way["name"]["office"](${bbox});
+);
+out center 60;`;
+          } else {
+            const nicheSelector = NICHES[nicheKey];
+            osmQuery = `[out:json][timeout:30];
+(
+  node[${nicheSelector}]["name"](${bbox});
+  way[${nicheSelector}]["name"](${bbox});
+);
+out center 60;`;
+          }
+
+          status.textContent = `📡 Scanning ${cleanCity}...${progressLabel} (${grandTotal} leads so far)`;
+
+          let data;
+          try {
+            data = await fetchOverpass(osmQuery);
+          } catch(fetchErr) {
+            status.textContent = `⚠️ Skipping ${cleanCity}: API error.${progressLabel}`;
+            await new Promise(r => setTimeout(r, 800));
+            continue;
+          }
+
+          let cityAdded = 0;
+          if (data.elements && data.elements.length > 0) {
+            for (const el of data.elements) {
+              if (!el.tags || !el.tags.name) continue;
+              if (nicheKey === 'web design' && el.tags.website && !el.tags.website.includes('facebook') && !el.tags.website.includes('.business.site')) continue;
+              const exists = leads.find(l => l.name.toLowerCase() === el.tags.name.toLowerCase() && l.city.toLowerCase().includes(cleanCity.toLowerCase()));
+              if (exists) continue;
+
+              let siteStatus = 'no_website';
+              let website = el.tags.website || el.tags['contact:website'] || '';
+              if (website) {
+                if (website.includes('.business.site')) siteStatus = 'outdated_website';
+                else if (website.startsWith('http://') || website.includes('facebook') || website.includes('instagram')) siteStatus = 'bad_website';
+                else siteStatus = 'good_website';
+                if (!website.startsWith('http')) website = 'https://' + website;
+              }
+              leads.unshift({
+                id: Date.now() + Math.random(),
+                name: el.tags.name,
+                phone: el.tags.phone || el.tags['contact:phone'] || el.tags['contact:mobile'] || '',
+                city: currentCity,
+                website,
+                status: siteStatus,
+                niche: nicheText,
+                notes: `Auto-scanned via OSM — ${currentCity}.`,
+                addedAt: new Date().toLocaleDateString()
+              });
+              cityAdded++;
+              grandTotal++;
+            }
+          }
+          save();
+          render();
+          status.textContent = `✅ ${cleanCity}: +${cityAdded} leads${progressLabel} | Total: ${grandTotal}`;
+          // Small delay between cities to respect API rate limits
+          if (ci < citiesToScan.length - 1) await new Promise(r => setTimeout(r, 1500));
+        }
+
+        status.style.color = 'var(--green)';
+        const cityLabel = isAllAreas ? `all ${totalCities} cities` : city.split(',')[0];
+        status.textContent = `🎉 Done! Added ${grandTotal} new leads from ${cityLabel}.`;
+      }
+    } catch (e) {
+      console.error(e);
+      status.style.color = 'var(--red)';
+      status.textContent = e.message || 'Error during scan. Try again.';
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = `<span>📡</span> START AUTO SCAN`;
+    setTimeout(() => { status.style.color = 'var(--muted)'; }, 5000);
+  }
+  let editingLeadId = null;
+
+  function save() {
+    localStorage.setItem('re_leads', JSON.stringify(leads));
+  }
+
+  function addLead() {
+    const name = document.getElementById('f-name').value.trim();
+    if (!name) { document.getElementById('f-name').focus(); return; }
+
+    const leadData = {
+      name,
+      phone: document.getElementById('f-phone').value.trim(),
+      city: document.getElementById('f-city').value.trim(),
+      website: document.getElementById('f-website').value.trim(),
+      status: document.getElementById('f-status').value,
+      notes: document.getElementById('f-notes').value.trim(),
+    };
+
+    if (editingLeadId) {
+      const idx = leads.findIndex(l => l.id === editingLeadId);
+      if (idx !== -1) {
+        leads[idx] = { ...leads[idx], ...leadData };
+      }
+      editingLeadId = null;
+      
+      const btnAdd = document.getElementById('btn-add-main');
+      btnAdd.textContent = '+ ADD LEAD';
+      btnAdd.style.background = 'var(--accent)';
+      btnAdd.style.color = '#000';
+    } else {
+      leads.unshift({
+        id: Date.now(),
+        ...leadData,
+        addedAt: new Date().toLocaleDateString()
+      });
+    }
+
+    save();
+    render();
+
+    // Clear form
+    ['f-name','f-phone','f-city','f-website','f-notes'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-status').value = 'no_website';
+    document.getElementById('f-name').focus();
+  }
+
+  function deleteLead(id) {
+    leads = leads.filter(l => l.id !== id);
+    save();
+    render();
+  }
+
+  function markContacted(id) {
+    const lead = leads.find(l => l.id === id);
+    if (lead) { lead.status = 'contacted'; save(); render(); }
+  }
+
+  function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  }
+
+  function render() {
+    const list = document.getElementById('lead-list');
+    const filtered = currentFilter === 'all' ? leads : leads.filter(l => l.status === currentFilter);
+
+    // Update stats
+    document.getElementById('cnt-total').textContent = leads.length;
+    document.getElementById('cnt-no').textContent = leads.filter(l=>l.status==='no_website').length;
+    document.getElementById('cnt-bad').textContent = leads.filter(l=>l.status==='bad_website').length;
+    document.getElementById('cnt-old').textContent = leads.filter(l=>l.status==='outdated_website').length;
+    document.getElementById('cnt-good').textContent = leads.filter(l=>l.status==='good_website').length;
+
+    if (filtered.length === 0) {
+      list.innerHTML = `<div class="empty-state"><div class="empty-icon">🗺️</div><div class="empty-text">${leads.length === 0 ? 'Add your first lead from Google Maps' : 'No leads in this category'}</div></div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map(l => {
+      const eName = escapeHTML(l.name);
+      const ePhone = escapeHTML(l.phone);
+      const eCity = escapeHTML(l.city);
+      const eWebsite = escapeHTML(l.website);
+      const eNotes = escapeHTML(l.notes);
+
+      return `
+      <div class="lead-card status-${l.status}">
+        <div class="lead-main">
+          <div class="lead-name">${eName}</div>
+          <div class="lead-meta">
+            ${ePhone ? `<span class="meta-item">📞 ${ePhone}</span>` : ''}
+            ${eCity ? `<span class="meta-item">📍 ${eCity}</span>` : ''}
+            ${eWebsite ? `<span class="meta-item">🌐 <a href="https://${eWebsite.replace(/^https?:\/\//,'')}" target="_blank">${eWebsite}</a></span>` : '<span class="meta-item">🌐 No website</span>'}
+            <span class="meta-item">🗺️ <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(l.name + (l.city ? ' ' + l.city : ''))}" target="_blank">Google Maps</a></span>
+            <span class="meta-item">🗓 ${escapeHTML(l.addedAt)}</span>
+          </div>
+          ${eNotes ? `<div class="lead-notes">"${eNotes}"</div>` : ''}
+        </div>
+        <div class="lead-actions">
+          <span class="status-badge badge-${l.status}">${STATUS_LABELS[l.status]}</span>
+          <a class="btn-email" href="${eWebsite ? `https://hunter.io/search?query=${encodeURIComponent(eWebsite.replace(/^https?:\/\//,''))}` : `https://www.google.com/search?q=${encodeURIComponent('"' + l.name + '" "@gmail.com" OR email')}`}" target="_blank">🔍 Find Email</a>
+          <button class="btn-pitch" onclick="draftPitch(${l.id}, this)">✉️ Draft Pitch</button>
+          ${l.status !== 'contacted' ? `<button class="btn-mark" onclick="markContacted(${l.id})">Mark Contacted</button>` : ''}
+          <button class="btn-mark" onclick="editLead(${l.id})" style="border-color:var(--text); color:var(--text);">Edit</button>
+          <button class="btn-delete" onclick="deleteLead(${l.id})">Remove</button>
+        </div>
+      </div>
+    `}).join('');
+  }
+
+  function editLead(id) {
+    const lead = leads.find(l => l.id === id);
+    if (!lead) return;
+    
+    document.getElementById('f-name').value = lead.name;
+    document.getElementById('f-phone').value = lead.phone || '';
+    document.getElementById('f-city').value = lead.city || '';
+    
+    let websiteVal = lead.website || '';
+    if (websiteVal.startsWith('https://')) websiteVal = websiteVal.replace('https://', '');
+    if (websiteVal.startsWith('http://')) websiteVal = websiteVal.replace('http://', '');
+    document.getElementById('f-website').value = websiteVal;
+    
+    document.getElementById('f-status').value = lead.status;
+    document.getElementById('f-notes').value = lead.notes || '';
+    
+    editingLeadId = id;
+    
+    const btnAdd = document.getElementById('btn-add-main');
+    btnAdd.textContent = 'UPDATE LEAD';
+    btnAdd.style.background = 'var(--text)';
+    btnAdd.style.color = '#000';
+    
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+
+  function exportCSV() {
+    if (!leads.length) return;
+    const headers = ['ID', 'Name', 'Email', 'Niche', 'Phone', 'City', 'Website', 'Status', 'Notes', 'Maps Link', 'Added'];
+    const rows = leads.map(l => {
+      const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(l.name + (l.city ? ' ' + l.city : ''))}`;
+      const email = ''; // Placeholder for email
+      return [l.id, l.name, email, l.niche, l.phone, l.city, l.website, l.status, l.notes, mapsLink, l.addedAt].map(v => `"${(v||'').toString().replace(/"/g,'""').replace(/\n|\r/g, ' ')}"`);
+    });
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    a.download = 'texas_re_leads.csv';
+    a.click();
+  }
+
+  function exportJSON() {
+    if (!leads.length) return;
+    const json = JSON.stringify(leads, null, 2);
+    const a = document.createElement('a');
+    a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
+    a.download = 'texas_re_leads.json';
+    a.click();
+  }
+
+  function clearAllLeads() {
+    if (confirm('Are you sure you want to delete all leads? This cannot be undone.')) {
+      leads = [];
+      save();
+      render();
+    }
+  }
+
+  function copyPrompt(btn) {
+    const text = btn.previousElementSibling.textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const originalText = btn.textContent;
+      btn.textContent = 'Copied!';
+      btn.classList.add('copy-success');
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.classList.remove('copy-success');
+      }, 1500);
+    });
+  }
+
+  const REGION_CITIES = {
+    // India – Tamil Nadu
+    in_tn: [
+      'Chennai, Tamil Nadu', 'Coimbatore, Tamil Nadu', 'Madurai, Tamil Nadu',
+      'Tiruchirappalli, Tamil Nadu', 'Salem, Tamil Nadu', 'Tirunelveli, Tamil Nadu',
+      'Tiruppur, Tamil Nadu', 'Vellore, Tamil Nadu', 'Erode, Tamil Nadu',
+      'Thoothukkudi, Tamil Nadu', 'Dindigul, Tamil Nadu', 'Thanjavur, Tamil Nadu',
+      'Ranipet, Tamil Nadu', 'Sivakasi, Tamil Nadu', 'Karur, Tamil Nadu',
+      'Nagapattinam, Tamil Nadu', 'Kanchipuram, Tamil Nadu', 'Kumbakonam, Tamil Nadu',
+      'Cuddalore, Tamil Nadu', 'Villupuram, Tamil Nadu', 'Nagercoil, Tamil Nadu',
+      'Pollachi, Tamil Nadu', 'Hosur, Tamil Nadu', 'Chengalpattu, Tamil Nadu',
+      'Krishnagiri, Tamil Nadu', 'Dharmapuri, Tamil Nadu', 'Namakkal, Tamil Nadu'
+    ],
+    // India – Karnataka
+    in_ka: [
+      'Bengaluru, Karnataka', 'Mysuru, Karnataka', 'Hubli, Karnataka',
+      'Mangaluru, Karnataka', 'Belagavi, Karnataka', 'Kalaburagi, Karnataka',
+      'Ballari, Karnataka', 'Davangere, Karnataka', 'Shivamogga, Karnataka',
+      'Tumakuru, Karnataka', 'Udupi, Karnataka', 'Hassan, Karnataka'
+    ],
+    // India – Maharashtra
+    in_mh: [
+      'Mumbai, Maharashtra', 'Pune, Maharashtra', 'Nagpur, Maharashtra',
+      'Nashik, Maharashtra', 'Aurangabad, Maharashtra', 'Solapur, Maharashtra',
+      'Kolhapur, Maharashtra', 'Thane, Maharashtra', 'Navi Mumbai, Maharashtra'
+    ],
+    // India – Andhra Pradesh
+    in_ap: [
+      'Visakhapatnam, Andhra Pradesh', 'Vijayawada, Andhra Pradesh', 'Guntur, Andhra Pradesh',
+      'Nellore, Andhra Pradesh', 'Kurnool, Andhra Pradesh', 'Tirupati, Andhra Pradesh',
+      'Rajahmundry, Andhra Pradesh', 'Kakinada, Andhra Pradesh', 'Anantapur, Andhra Pradesh'
+    ],
+    // India – Telangana
+    in_ts: [
+      'Hyderabad, Telangana', 'Warangal, Telangana', 'Nizamabad, Telangana',
+      'Karimnagar, Telangana', 'Khammam, Telangana', 'Ramagundam, Telangana'
+    ],
+    // India – Kerala
+    in_kl: [
+      'Kochi, Kerala', 'Thiruvananthapuram, Kerala', 'Kozhikode, Kerala',
+      'Thrissur, Kerala', 'Kollam, Kerala', 'Palakkad, Kerala',
+      'Malappuram, Kerala', 'Kannur, Kerala', 'Kottayam, Kerala'
+    ],
+    us: ['Austin, Texas', 'Dallas, Texas', 'Miami, Florida', 'Denver, Colorado', 'Seattle, Washington', 'Atlanta, Georgia', 'Phoenix, Arizona'],
+    ca: ['Toronto, Ontario', 'Vancouver, BC', 'Calgary, Alberta', 'Ottawa, Ontario', 'Montreal, Quebec'],
+    uk: ['London', 'Birmingham', 'Manchester', 'Bristol', 'Leeds', 'Peterborough'],
+    au: ['Sydney', 'Melbourne', 'Brisbane', 'Perth', 'Adelaide'],
+    ae: ['Dubai', 'Abu Dhabi', 'Sharjah']
+  };
+
+  function updateCityDropdown() {
+    const region = document.getElementById('as-region').value;
+    const citySelect = document.getElementById('as-city');
+    citySelect.innerHTML = '';
+
+    // "All Areas" option at the top
+    const allOpt = document.createElement('option');
+    allOpt.value = '__all__';
+    const cityCount = REGION_CITIES[region].length;
+    allOpt.textContent = `🌍 All Areas — Scan All ${cityCount} Cities`;
+    citySelect.appendChild(allOpt);
+
+    // Divider
+    const divOpt = document.createElement('option');
+    divOpt.disabled = true;
+    divOpt.textContent = '─────────────────────';
+    citySelect.appendChild(divOpt);
+
+    REGION_CITIES[region].forEach(city => {
+      const opt = document.createElement('option');
+      opt.value = city; // keep full name e.g. "Chennai, Tamil Nadu"
+      opt.textContent = city;
+      citySelect.appendChild(opt);
+    });
+  }
+
+  function draftPitch(id, btn) {
+    const lead = leads.find(l => l.id === id);
+    if (!lead) return;
+    
+    let subject = `Quick question about ${lead.name}`;
+    let body = `Hi there,\n\nI was doing some research on businesses in ${lead.city} and came across ${lead.name} on Google Maps.\n\n`;
+    
+    if (lead.status === 'no_website') {
+      body += `I noticed you have great reviews but no website linked. Since many foreign clients search online before calling, you might be losing some high-budget inquiries to competitors.\n\nI run a web solutions company called Eantrax, and we specialize in building highly converting websites that turn searchers into paying clients. \n\nAre you open to a quick 5-min chat about getting a professional site set up?`;
+    } else if (lead.status === 'bad_website' || lead.status === 'outdated_website') {
+      body += `I checked out your website and noticed it might be a bit outdated and missing out on mobile traffic. In 2026, a premium brand presence is crucial for landing high-budget clients.\n\nI run a web solutions company called Eantrax, and we specialize in upgrading sites to be cinematic, high-converting lead machines without the hassle.\n\nWould you be open to a quick 5-min chat about how we can modernize your online presence?`;
+    } else {
+      body += `I checked out your website, and while it looks good, there are always opportunities to optimize for faster load times and better conversion rates.\n\nI run Eantrax, a web solutions agency, and we help businesses scale using high-end tech.\n\nLet me know if you'd be open to connecting!`;
+    }
+    
+    body += `\n\nBest,\nEaswar\nFounder, Eantrax.com`;
+    
+    const textToCopy = `Subject: ${subject}\n\n${body}`;
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      const originalText = btn.textContent;
+      btn.textContent = '✅ Copied!';
+      btn.style.background = 'var(--green)';
+      btn.style.color = '#000';
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.style.background = 'transparent';
+        btn.style.color = 'var(--accent)';
+      }, 2000);
+    });
+  }
+
+  // Enter key shortcut
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.ctrlKey) addLead();
+  });
+
+  updateCityDropdown(); // Populate initial US cities
+  render();
+</script>
+</body>
+</html>

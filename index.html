@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -11,7 +11,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Share+Tech+Mono&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
         integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
@@ -51,7 +51,7 @@
             <i class="fa-solid fa-bars"></i>
         </button>
         <span style="font-weight: 700; font-size: 1rem; letter-spacing: 2px;">EANTRAX</span>
-        <div style="width: 25px;"></div>
+        <div id="mobile-sync-status" class="cloud-sync-pill synced" title="Firebase Cloud Sync (Tap to Sync)"><i class="fa-solid fa-cloud"></i> <span>Synced</span></div>
     </div>
 
     <!-- Mobile Overlay -->
@@ -75,6 +75,11 @@
                         style="font-size: 1.2rem; font-weight: 800; display: block; margin-bottom: 2px;">Eantrax</span>
                     <span id="sidebar-tagline"
                         style="font-weight: 500; font-size: 0.7rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px;">Quotation</span>
+                </div>
+                <div style="display: flex; justify-content: center; width: 100%;">
+                    <div id="desktop-sync-status" class="cloud-sync-pill synced" title="Firebase Cloud Sync (Click to Sync)">
+                        <i class="fa-solid fa-cloud"></i> <span>Cloud Synced</span>
+                    </div>
                 </div>
             </div>
 
@@ -110,6 +115,12 @@
                     </button>
                 </li>
                 <li class="nav-item">
+                    <button type="button" class="nav-link" data-target="lead-qualifier">
+                        <div class="nav-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+                        <span>CRM</span>
+                    </button>
+                </li>
+                <li class="nav-item">
                     <button type="button" class="nav-link" data-target="settings">
                         <div class="nav-icon"><i class="fa-solid fa-gear"></i></div>
                         <span>Settings</span>
@@ -136,29 +147,47 @@
                 </header>
 
                 <div class="grid-3">
-                    <div class="card stat-card">
-                        <span class="stat-title">Total Revenue</span>
-                        <span class="stat-value" id="total-revenue">0.00</span>
+                    <div class="card stat-card stat-card-green">
+                        <div class="stat-header">
+                            <span class="stat-title">Total Revenue</span>
+                            <span class="super-pill pill-yellow">Total</span>
+                        </div>
+                        <span class="stat-value digital-stat" id="total-revenue">0.00</span>
+                    </div>
+                    <div class="card stat-card stat-card-orange">
+                        <div class="stat-header">
+                            <span class="stat-title">Pending Payments</span>
+                            <span class="super-pill pill-gray">Pending</span>
+                        </div>
+                        <span class="stat-value digital-stat" id="pending-payments">0.00</span>
                     </div>
                     <div class="card stat-card">
-                        <span class="stat-title">Pending Payments</span>
-                        <span class="stat-value" id="pending-payments" style="color: var(--warning-color)">0.00</span>
+                        <div class="stat-header">
+                            <span class="stat-title">Paid Invoices</span>
+                            <span class="super-pill pill-gray">Optimal</span>
+                        </div>
+                        <span class="stat-value digital-stat" id="total-paid">0</span>
                     </div>
                     <div class="card stat-card">
-                        <span class="stat-title">Paid Invoices</span>
-                        <span class="stat-value" id="total-paid" style="color: var(--success-color)">0</span>
+                        <div class="stat-header">
+                            <span class="stat-title">Drafts</span>
+                            <span class="super-pill pill-gray">Normal</span>
+                        </div>
+                        <span class="stat-value digital-stat" id="total-drafts">0</span>
                     </div>
                     <div class="card stat-card">
-                        <span class="stat-title">Drafts</span>
-                        <span class="stat-value" id="total-drafts" style="color: var(--text-secondary)">0</span>
+                        <div class="stat-header">
+                            <span class="stat-title">Overdue</span>
+                            <span class="super-pill pill-yellow">Action</span>
+                        </div>
+                        <span class="stat-value digital-stat" id="total-overdue">0</span>
                     </div>
                     <div class="card stat-card">
-                        <span class="stat-title">Overdue</span>
-                        <span class="stat-value" id="total-overdue" style="color: var(--danger-color)">0</span>
-                    </div>
-                    <div class="card stat-card">
-                        <span class="stat-title">Est. Profit (Paid)</span>
-                        <span class="stat-value" id="total-profit">0.00</span>
+                        <div class="stat-header">
+                            <span class="stat-title">Est. Profit (Paid)</span>
+                            <span class="super-tag pill-yellow">Net</span>
+                        </div>
+                        <span class="stat-value digital-stat" id="total-profit">0.00</span>
                     </div>
                 </div>
                 <div class="grid-2">
@@ -184,16 +213,19 @@
                     </div>
                     <div class="card">
                         <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                            <h3 style="margin: 0;">Business Trends</h3>
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <h3 style="margin: 0; font-weight: 700; font-size: 1.1rem;">Business Trends</h3>
+                                <span class="super-pill pill-yellow" style="font-size: 0.7rem;"><i class="fa-solid fa-arrow-trend-up"></i> Live</span>
+                            </div>
                             <div class="chart-toggles"
-                                style="display: flex; background: #f1f5f9; padding: 4px; border-radius: 8px;">
+                                style="display: flex; background: #f1f3f5; padding: 4px; border-radius: 9999px;">
                                 <button class="btn btn-chart-toggle" id="toggle-day" type="button"
-                                    style="padding: 4px 8px; font-size: 11px;">Day</button>
+                                    style="padding: 4px 14px; font-size: 11px; border-radius: 9999px;">Day</button>
                                 <button class="btn btn-chart-toggle" id="toggle-week" type="button"
-                                    style="padding: 4px 8px; font-size: 11px;">Week</button>
+                                    style="padding: 4px 14px; font-size: 11px; border-radius: 9999px;">Week</button>
                                 <button class="btn btn-chart-toggle active" id="toggle-month" type="button"
-                                    style="padding: 4px 8px; font-size: 11px;">Month</button>
+                                    style="padding: 4px 14px; font-size: 11px; border-radius: 9999px;">Month</button>
                             </div>
                         </div>
 
@@ -326,12 +358,18 @@
                                     <i class="fa-solid fa-lock" style="margin-right: 5px;"></i> Estimated Project Cost
                                     (Internal)
                                 </p>
-                                <div style="display: flex; align-items: center; gap: 5px;">
-                                    <span style="font-size: 0.7rem; color: #b45309;">Used for profit calculation. Not
-                                        shown
-                                        to client.</span>
+                                <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 8px;">
+                                    <span style="font-size: 0.7rem; color: #b45309;">Used for profit calculation. Not shown to client.</span>
                                 </div>
+                                <input type="number" id="doc-expense" class="form-control" min="0" step="0.01" placeholder="0.00" style="background:#ffffff;">
                             </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Core Skills (Website Setup)</h3>
+                        <div id="skills-grid" class="skills-grid">
+                            <!-- Populated by JS -->
                         </div>
                     </div>
 
@@ -403,31 +441,15 @@
                         style="background: white; border-radius: 14px; padding: 16px 18px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; align-items: center; gap: 14px;">
                         <div
                             style="width: 40px; height: 40px; border-radius: 10px; background: #eff6ff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                            <i class="fa-solid fa-file-lines" style="color: #3b82f6; font-size: 16px;"></i>
+                            <i class="fa-solid fa-file-invoice" style="color: #3b82f6; font-size: 16px;"></i>
                         </div>
                         <div>
                             <p
                                 style="margin: 0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #94a3b8; font-weight: 700;">
-                                Quotes This Month</p>
-                            <p id="iq-quotes-month"
+                                Quoted Value</p>
+                            <p id="iq-quoted"
                                 style="margin: 2px 0 0 0; font-size: 1.4rem; font-weight: 800; color: #0f172a; line-height: 1;">
-                                0</p>
-                        </div>
-                    </div>
-
-                    <div
-                        style="background: white; border-radius: 14px; padding: 16px 18px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; align-items: center; gap: 14px;">
-                        <div
-                            style="width: 40px; height: 40px; border-radius: 10px; background: #f0fdf4; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                            <i class="fa-solid fa-arrow-trend-up" style="color: #16a34a; font-size: 16px;"></i>
-                        </div>
-                        <div>
-                            <p
-                                style="margin: 0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #94a3b8; font-weight: 700;">
-                                Conversion Rate</p>
-                            <p id="iq-conversion"
-                                style="margin: 2px 0 0 0; font-size: 1.4rem; font-weight: 800; color: #16a34a; line-height: 1;">
-                                0%</p>
+                                &#8377;0</p>
                         </div>
                     </div>
 
@@ -435,14 +457,30 @@
                         style="background: white; border-radius: 14px; padding: 16px 18px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; align-items: center; gap: 14px;">
                         <div
                             style="width: 40px; height: 40px; border-radius: 10px; background: #fefce8; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                            <i class="fa-solid fa-indian-rupee-sign" style="color: #ca8a04; font-size: 16px;"></i>
+                            <i class="fa-solid fa-file-invoice-dollar" style="color: #ca8a04; font-size: 16px;"></i>
                         </div>
                         <div>
                             <p
                                 style="margin: 0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #94a3b8; font-weight: 700;">
-                                Total Revenue</p>
-                            <p id="iq-revenue"
-                                style="margin: 2px 0 0 0; font-size: 1.4rem; font-weight: 800; color: #0f172a; line-height: 1;">
+                                Invoiced</p>
+                            <p id="iq-invoiced"
+                                style="margin: 2px 0 0 0; font-size: 1.4rem; font-weight: 800; color: #ca8a04; line-height: 1;">
+                                &#8377;0</p>
+                        </div>
+                    </div>
+
+                    <div
+                        style="background: white; border-radius: 14px; padding: 16px 18px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; align-items: center; gap: 14px;">
+                        <div
+                            style="width: 40px; height: 40px; border-radius: 10px; background: #f0fdf4; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fa-solid fa-sack-dollar" style="color: #16a34a; font-size: 16px;"></i>
+                        </div>
+                        <div>
+                            <p
+                                style="margin: 0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #94a3b8; font-weight: 700;">
+                                Collected Revenue</p>
+                            <p id="iq-collected"
+                                style="margin: 2px 0 0 0; font-size: 1.4rem; font-weight: 800; color: #16a34a; line-height: 1;">
                                 &#8377;0</p>
                         </div>
                     </div>
@@ -451,30 +489,14 @@
                         style="background: white; border-radius: 14px; padding: 16px 18px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; align-items: center; gap: 14px;">
                         <div
                             style="width: 40px; height: 40px; border-radius: 10px; background: #fff7ed; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                            <i class="fa-solid fa-clock" style="color: #ea580c; font-size: 16px;"></i>
+                            <i class="fa-solid fa-clock-rotate-left" style="color: #ea580c; font-size: 16px;"></i>
                         </div>
                         <div>
                             <p
                                 style="margin: 0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #94a3b8; font-weight: 700;">
-                                Pending Amount</p>
-                            <p id="iq-pending"
+                                Outstanding</p>
+                            <p id="iq-outstanding"
                                 style="margin: 2px 0 0 0; font-size: 1.4rem; font-weight: 800; color: #ea580c; line-height: 1;">
-                                &#8377;0</p>
-                        </div>
-                    </div>
-
-                    <div
-                        style="background: white; border-radius: 14px; padding: 16px 18px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; align-items: center; gap: 14px;">
-                        <div
-                            style="width: 40px; height: 40px; border-radius: 10px; background: #f5f3ff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                            <i class="fa-solid fa-rotate" style="color: #7c3aed; font-size: 16px;"></i>
-                        </div>
-                        <div>
-                            <p
-                                style="margin: 0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #94a3b8; font-weight: 700;">
-                                Recurring Revenue</p>
-                            <p id="iq-recurring"
-                                style="margin: 2px 0 0 0; font-size: 1.4rem; font-weight: 800; color: #7c3aed; line-height: 1;">
                                 &#8377;0</p>
                         </div>
                     </div>
@@ -489,6 +511,7 @@
                     <button type="button" class="status-filter" data-filter="viewed">Viewed</button>
                     <button type="button" class="status-filter" data-filter="accepted">Accepted</button>
                     <button type="button" class="status-filter" data-filter="invoiced">Invoiced</button>
+                    <button type="button" class="status-filter" data-filter="proforma">Proforma Invoice</button>
                     <button type="button" class="status-filter" data-filter="paid">Paid</button>
                     <button type="button" class="status-filter" data-filter="overdue">Overdue</button>
                 </div>
@@ -559,8 +582,7 @@
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Phone</th>
-                                    <th>History</th>
-                                    <th>Action</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody><!-- Populated by JS --></tbody>
@@ -569,39 +591,89 @@
                 </div>
             </section>
 
-            <!-- Client History View (Detailed Dashboard) -->
+            <!-- Client 360° Profile View -->
             <section id="client-history" class="view-section hidden">
-                <header>
-                    <div style="display: flex; align-items: center; gap: 15px;">
+                <header style="margin-bottom: 0;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
                         <button id="client-history-back-btn" type="button" class="btn btn-outline"
                             style="padding: 10px;" aria-label="Back to clients">
                             <i class="fa-solid fa-arrow-left"></i>
                         </button>
-                        <div>
-                            <h1 id="history-client-name" style="margin: 0;">Client History</h1>
-                            <p id="history-client-contact"
-                                style="color: var(--text-secondary); margin: 0; font-size: 13px;"></p>
-                        </div>
+                        <span style="color: var(--text-secondary); font-size: 0.85rem;">Clients &rsaquo; <strong id="profile-breadcrumb">Profile</strong></span>
                     </div>
+                    <div></div>
                 </header>
 
-                <div class="grid-3" style="margin-bottom: 25px;">
-                    <div class="card stat-card">
-                        <span class="stat-title">Lifetime Value</span>
-                        <span class="stat-value" id="history-ltv">&#8377;0.00</span>
+                <!-- Hero -->
+                <div class="client-profile-hero">
+                    <div class="client-avatar" id="profile-avatar">AR</div>
+                    <div class="client-hero-info">
+                        <h1 class="client-hero-name" id="history-client-name">Client Name</h1>
+                        <div class="client-hero-contact" id="profile-contact-links"></div>
+                        <p class="client-hero-address" id="profile-address"></p>
                     </div>
-                    <div class="card stat-card">
-                        <span class="stat-title">Acceptance Rate</span>
-                        <span class="stat-value" id="history-rate">0%</span>
-                    </div>
-                    <div class="card stat-card">
-                        <span class="stat-title">Avg. Payment Days</span>
-                        <span class="stat-value" id="history-avg-days">0</span>
+                    <div class="client-hero-actions">
+                        <button class="btn-hero btn-hero-primary" id="profile-new-quote-btn">
+                            <i class="fa-solid fa-file-circle-plus"></i> New Quote
+                        </button>
+                        <button class="btn-hero btn-hero-ghost" id="profile-email-btn">
+                            <i class="fa-solid fa-envelope"></i> Email
+                        </button>
                     </div>
                 </div>
 
+                <!-- 5-stat Overview -->
+                <div class="profile-stats-grid">
+                    <div class="profile-stat-card">
+                        <div class="profile-stat-value" id="profile-total-quotes">0</div>
+                        <div class="profile-stat-label">Total Quotes</div>
+                    </div>
+                    <div class="profile-stat-card">
+                        <div class="profile-stat-value highlight-green" id="profile-accepted">0</div>
+                        <div class="profile-stat-label">Accepted</div>
+                    </div>
+                    <div class="profile-stat-card">
+                        <div class="profile-stat-value highlight-amber" id="profile-pending">0</div>
+                        <div class="profile-stat-label">Pending</div>
+                    </div>
+                    <div class="profile-stat-card">
+                        <div class="profile-stat-value highlight-blue" id="profile-total-business">&#8377;0</div>
+                        <div class="profile-stat-label">Total Business</div>
+                    </div>
+                    <div class="profile-stat-card">
+                        <div class="profile-stat-value highlight-red" id="profile-outstanding">&#8377;0</div>
+                        <div class="profile-stat-label">Outstanding</div>
+                    </div>
+                </div>
+
+                <!-- Activity + Services 2-col -->
+                <div class="profile-grid-2">
+                    <!-- Recent Activity -->
+                    <div class="card" style="padding: 20px 24px;">
+                        <h3 style="margin-bottom: 14px; font-size: 1rem;">
+                            <i class="fa-solid fa-bolt" style="color:#3b82f6; margin-right:7px;"></i>Recent Activity
+                        </h3>
+                        <ul class="activity-feed" id="profile-activity-feed">
+                            <li class="activity-empty">No activity yet.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Services Used -->
+                    <div class="card" style="padding: 20px 24px;">
+                        <h3 style="margin-bottom: 14px; font-size: 1rem;">
+                            <i class="fa-solid fa-briefcase" style="color:#8b5cf6; margin-right:7px;"></i>Services &amp; Products
+                        </h3>
+                        <div class="services-list" id="profile-services-list">
+                            <p style="color:#94a3b8; font-size:0.875rem;">No services found.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Document History -->
                 <div class="card">
-                    <h3>Document History</h3>
+                    <h3 style="margin-bottom: 14px; font-size: 1rem;">
+                        <i class="fa-solid fa-folder-open" style="color:#f59e0b; margin-right:7px;"></i>Document History
+                    </h3>
                     <div class="table-container">
                         <table id="history-table">
                             <thead>
@@ -662,6 +734,21 @@
                                 <input type="color" id="settings-color" class="form-control"
                                     style="width: 100px; padding: 2px; height: 40px;">
                                 <span id="color-value">#0f172a</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="grid-column: span 2;">
+                        <h3>Document Numbering</h3>
+                        <div class="grid-2"
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-lg);">
+                            <div class="form-group">
+                                <label class="form-label" for="settings-next-quote">Next Quote Number</label>
+                                <input type="number" id="settings-next-quote" class="form-control" min="1" step="1" placeholder="e.g. 1078">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="settings-next-invoice">Next Invoice Number</label>
+                                <input type="number" id="settings-next-invoice" class="form-control" min="1" step="1" placeholder="e.g. 5001">
                             </div>
                         </div>
                     </div>
@@ -735,8 +822,7 @@
                             </button>
                             <button id="reset-docs-btn" type="button" class="btn btn-outline"
                                 style="flex: 1; min-width: 200px; color: var(--warning-color); border-color: var(--warning-color);">
-                                <i class="fa-solid fa-file-circle-xmark" style="margin-right: 8px;"></i> Reset Documents
-                                Only
+                                <i class="fa-solid fa-file-circle-xmark" style="margin-right: 8px;"></i> Reset Documents Only
                             </button>
                             <button id="reset-db-btn" type="button" class="btn btn-outline"
                                 style="flex: 1; min-width: 200px; color: var(--danger-color); border-color: var(--danger-color);">
@@ -745,65 +831,195 @@
                             <input type="file" id="import-db" hidden accept=".json">
                         </div>
                     </div>
-
                 </div>
             </section>
 
             <!-- Product Catalog View -->
             <section id="catalog" class="view-section hidden">
                 <header>
-                    <h1>Product Catalog</h1>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <button id="catalog-back-to-categories" type="button" class="btn btn-outline"
+                            style="padding: 10px; display: none;" aria-label="Back to categories">
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                        <div>
+                            <h1 id="catalog-title">Product Catalog</h1>
+                            <p id="catalog-subtitle" style="margin:2px 0 0; font-size:0.85rem; color:var(--text-secondary);">Manage services, pricing &amp; recurring plans</p>
+                        </div>
+                    </div>
                     <button id="add-product-btn" type="button" class="btn btn-primary">+ Add Product</button>
                 </header>
 
-                <div class="invoice-controls" style="margin-bottom: 12px;">
-                    <input id="catalog-search" type="text" class="form-control"
-                        placeholder="Search products/services..." style="max-width: 380px;">
-                    <select id="catalog-sort" class="form-control" style="width: 230px;">
-                        <option value="name-asc">Sort: Name A-Z</option>
-                        <option value="name-desc">Sort: Name Z-A</option>
-                        <option value="price-desc">Sort: Price High-Low</option>
-                        <option value="price-asc">Sort: Price Low-High</option>
-                        <option value="recent">Sort: Recently Added</option>
-                    </select>
-                    <label
-                        style="display:flex; align-items:center; gap:8px; margin:0; font-size:0.85rem; color:var(--text-secondary);">
-                        <input id="catalog-recurring-only" type="checkbox">
-                        Recurring only
-                    </label>
+                <!-- Category Cards Container -->
+                <div id="catalog-categories-container">
+                    <div class="quick-stats-grid" id="catalog-summary">
+                        <div class="card stat-card">
+                            <span class="stat-title">Total Products</span>
+                            <span class="stat-value" id="catalog-total">0</span>
+                        </div>
+                        <div class="card stat-card">
+                            <span class="stat-title">Recurring Services</span>
+                            <span class="stat-value" id="catalog-recurring-count">0</span>
+                        </div>
+                        <div class="card stat-card">
+                            <span class="stat-title">Avg Price</span>
+                            <span class="stat-value" id="catalog-avg-price">&#8377;0</span>
+                        </div>
+                    </div>
+                    <div id="catalog-categories-grid" class="grid-3" style="margin-top: 20px;">
+                        <!-- Category cards will be dynamically rendered here -->
+                    </div>
+                    <!-- Recently Added & Popular section -->
+                    <div id="catalog-recents-section" style="margin-top: 32px;"></div>
                 </div>
 
-                <div class="quick-stats-grid" id="catalog-summary">
+                <!-- Products Table Container (Hidden by default, shown when category is selected) -->
+                <div id="catalog-items-container" class="hidden">
+                    <div class="invoice-controls" style="margin-bottom: 12px;">
+                        <input id="catalog-search" type="text" class="form-control"
+                            placeholder="Search products/services..." style="max-width: 380px;">
+                        <select id="catalog-sort" class="form-control" style="width: 230px;">
+                            <option value="name-asc">Sort: Name A-Z</option>
+                            <option value="name-desc">Sort: Name Z-A</option>
+                            <option value="price-desc">Sort: Price High-Low</option>
+                            <option value="price-asc">Sort: Price Low-High</option>
+                            <option value="recent">Sort: Recently Added</option>
+                        </select>
+                        <label
+                            style="display:flex; align-items:center; gap:8px; margin:0; font-size:0.85rem; color:var(--text-secondary);">
+                            <input id="catalog-recurring-only" type="checkbox">
+                            Recurring only
+                        </label>
+                    </div>
+
+                    <div class="card invoice-table-card">
+                        <div class="table-container catalog-table-wrap">
+                            <table class="table" id="catalog-table">
+                                <thead>
+                                    <tr>
+                                        <th>Description</th>
+                                        <th>Default Price</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="lead-qualifier" class="view-section hidden">
+                <header>
+                    <h1>CRM</h1>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <button id="crm-add-lead-btn" type="button" class="btn btn-primary">
+                            <i class="fa-solid fa-plus"></i> Add New Lead
+                        </button>
+                        <button id="crm-import-legacy-btn" type="button" class="btn btn-outline">
+                            <i class="fa-solid fa-cloud-arrow-down"></i> Import Qualifier Data
+                        </button>
+                        <button id="crm-import-file-btn" type="button" class="btn btn-outline" style="border-color:var(--emerald); color:var(--emerald);">
+                            <i class="fa-solid fa-file-import"></i> Import CSV
+                        </button>
+                        <input type="file" id="crm-import-file-input" accept=".csv" style="display:none;">
+                        <button id="crm-export-btn" type="button" class="btn btn-primary">
+                            <i class="fa-solid fa-file-csv"></i> Export Leads
+                        </button>
+                    </div>
+                </header>
+
+                <div class="crm-stats-grid">
                     <div class="card stat-card">
-                        <span class="stat-title">Total Products</span>
-                        <span class="stat-value" id="catalog-total">0</span>
+                        <span class="stat-title">Total Leads</span>
+                        <span class="stat-value" id="crm-total-leads">0</span>
                     </div>
                     <div class="card stat-card">
-                        <span class="stat-title">Recurring</span>
-                        <span class="stat-value" id="catalog-recurring-count">0</span>
+                        <span class="stat-title">Qualified</span>
+                        <span class="stat-value" id="crm-qualified-leads">0</span>
                     </div>
                     <div class="card stat-card">
-                        <span class="stat-title">Avg Price</span>
-                        <span class="stat-value" id="catalog-avg-price">&#8377;0</span>
+                        <span class="stat-title">Proposal Stage</span>
+                        <span class="stat-value" id="crm-proposal-leads">0</span>
+                    </div>
+                    <div class="card stat-card">
+                        <span class="stat-title">Won Value</span>
+                        <span class="stat-value" id="crm-won-value">&#8377;0</span>
+                    </div>
+                    <div class="card stat-card">
+                        <span class="stat-title">Follow-ups Due</span>
+                        <span class="stat-value" id="crm-followups-due">0</span>
                     </div>
                 </div>
 
-                <div class="card invoice-table-card">
-                    <div class="table-container catalog-table-wrap">
-                        <table class="table" id="catalog-table">
-                            <thead>
-                                <tr>
-                                    <th>Description</th>
-                                    <th>Default Price</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Populated by JS -->
-                            </tbody>
-                        </table>
+                                    
+
+                    <div class="crm-main">
+                        <div class="card">
+                            <div class="crm-toolbar">
+                                <input id="crm-search" type="text" class="form-control" placeholder="Search company, location, source, notes...">
+                                <select id="crm-state-filter" class="form-control">
+                                    <option value="all">All Places</option>
+                                </select>
+                                <select id="crm-website-filter" class="form-control">
+                                    <option value="all">All Websites</option>
+                                    <option value="good">Good Website</option>
+                                    <option value="bad">Bad Website</option>
+                                    <option value="no_website">No Website</option>
+                                </select>
+                                <select id="crm-niche-filter" class="form-control">
+                                    <option value="all">All Niches</option>
+                                </select>
+                                <select id="crm-stage-filter" class="form-control">
+                                    <option value="all">All Stages</option>
+                                    <option value="new">New</option>
+                                    <option value="qualified">Qualified</option>
+                                    <option value="proposal">Proposal</option>
+                                    <option value="negotiation">Negotiation</option>
+                                    <option value="won">Won</option>
+                                    <option value="lost">Lost</option>
+                                </select>
+                            </div>
+                            <div class="crm-board" id="crm-board"></div>
+                        </div>
+
+                        <div class="card invoice-table-card">
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+                                <h3>Lead Pipeline</h3>
+                                <div id="crm-bulk-bar" style="display:none; align-items:center; gap:10px; flex-wrap:wrap;">
+                                    <span id="crm-selected-count" style="font-size:13px; color:#64748b;">0 selected</span>
+                                    <button type="button" id="crm-delete-selected-btn" class="btn btn-danger-outline" style="padding:6px 14px; font-size:13px;">
+                                        <i class="fa-solid fa-trash"></i> Delete Selected
+                                    </button>
+                                    <button type="button" id="crm-clear-all-btn" class="btn btn-danger-outline" style="padding:6px 14px; font-size:13px; border-color:#dc2626; color:#dc2626;">
+                                        <i class="fa-solid fa-trash-can"></i> Delete ALL Leads
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="table-container">
+                                <table class="table" id="crm-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width:36px;">
+                                                <input type="checkbox" id="crm-select-all" title="Select all visible leads" style="cursor:pointer; width:16px; height:16px;">
+                                            </th>
+                                            <th>Lead</th>
+                                            <th>Status</th>
+                                            <th>Stage</th>
+                                            <th>Follow-up</th>
+                                            <th>Value</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
-                </div>
             </section>
 
         </main>
@@ -815,6 +1031,7 @@
             <div class="card" style="width: 400px; max-width: 90%;">
                 <h3 id="client-modal-title">Add New Client</h3>
                 <form id="client-form">
+                    <input type="hidden" id="modal-client-edit-index" value="">
                     <div class="form-group">
                         <label class="form-label" for="modal-client-name">Client Name</label>
                         <input type="text" id="modal-client-name" class="form-control" required>
@@ -835,6 +1052,7 @@
                         <button type="button" class="btn btn-outline" data-close-modal="client-modal">Cancel</button>
                         <button type="submit" class="btn btn-primary">Save Client</button>
                     </div>
+
                 </form>
             </div>
         </div>
@@ -854,6 +1072,17 @@
                     <div class="form-group">
                         <label class="form-label" for="modal-product-price">Default Price</label>
                         <input type="number" id="modal-product-price" class="form-control" required step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="modal-product-category">Category</label>
+                        <select id="modal-product-category" class="form-control" required>
+                            <option value="Websites & Landing Pages">Websites & Landing Pages</option>
+                            <option value="Domain, Hosting & Email">Domain, Hosting & Email</option>
+                            <option value="AMC & Maintenance">AMC & Maintenance</option>
+                            <option value="Power Platform & SharePoint">Power Platform & SharePoint</option>
+                            <option value="SEO & Digital Packages">SEO & Digital Packages</option>
+                            <option value="Other">Other</option>
+                        </select>
                     </div>
                     <div class="form-group" style="display:flex; align-items:center; gap:10px; margin-top:4px;">
                         <input type="checkbox" id="modal-product-recurring">
@@ -883,7 +1112,6 @@
 
     </div> <!-- End app-container -->
 
-    <!-- Datalist for autocomplete -->
     <datalist id="catalog-list"></datalist>
 
     <!-- Payment Modal -->
@@ -987,6 +1215,148 @@
             </form>
         </div>
     </div>
+
+            <!-- Lead Modal -->
+        <div id="lead-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="crm-form-title" tabindex="-1" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100;">
+            <div class="card" style="width: 600px; max-width: 95%; max-height: 90vh; overflow-y: auto;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 id="crm-form-title" style="margin: 0;">Add New Lead</h3>
+                    <button type="button" data-close-modal="lead-modal" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b;">&times;</button>
+                </div>
+                        <form id="crm-lead-form">
+                            <input type="hidden" id="crm-lead-id">
+                            <div class="form-group">
+                                <label class="form-label" for="crm-company">Company / Business</label>
+                                <input type="text" id="crm-company" class="form-control" placeholder="e.g. Wins Lai Realty" required>
+                            </div>
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label class="form-label" for="crm-contact">Contact Person</label>
+                                    <input type="text" id="crm-contact" class="form-control" placeholder="Owner or manager">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="crm-phone">Phone</label>
+                                    <input type="text" id="crm-phone" class="form-control" placeholder="+1 555 000 0000">
+                                </div>
+                            </div>
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label class="form-label" for="crm-email">Email</label>
+                                    <input type="email" id="crm-email" class="form-control" placeholder="hello@business.com">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="crm-website">Website</label>
+                                    <input type="text" id="crm-website" class="form-control" placeholder="business.com">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="crm-map-link">Map Link</label>
+                                <input type="text" id="crm-map-link" class="form-control" placeholder="https://maps.google.com/...">
+                            </div>
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label class="form-label" for="crm-location">Location</label>
+                                    <input type="text" id="crm-location" class="form-control" placeholder="Toronto, Canada">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="crm-source">Lead Source</label>
+                                    <select id="crm-source" class="form-control">
+                                        <option value="Google Maps">Google Maps</option>
+                                        <option value="Manual">Manual</option>
+                                        <option value="Referral">Referral</option>
+                                        <option value="Website">Website</option>
+                                        <option value="Cold Outreach">Cold Outreach</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label class="form-label" for="crm-website-status">Website Status</label>
+                                    <select id="crm-website-status" class="form-control">
+                                        <option value="no_website">No Website</option>
+                                        <option value="bad_website">Bad Website</option>
+                                        <option value="outdated_website">Outdated Website</option>
+                                        <option value="good_website">Good Website</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="crm-stage">Pipeline Stage</label>
+                                    <select id="crm-stage" class="form-control">
+                                        <option value="new">New</option>
+                                        <option value="qualified">Qualified</option>
+                                        <option value="proposal">Proposal</option>
+                                        <option value="negotiation">Negotiation</option>
+                                        <option value="won">Won</option>
+                                        <option value="lost">Lost</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label class="form-label" for="crm-priority">Priority</label>
+                                    <select id="crm-priority" class="form-control">
+                                        <option value="hot">🔴 Hot</option>
+                                        <option value="warm" selected>🟠 Warm</option>
+                                        <option value="cold">🔵 Cold</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="crm-value">Estimated Value</label>
+                                    <input type="number" id="crm-value" class="form-control" min="0" step="0.01" placeholder="15000">
+                                </div>
+                            </div>
+                            <!-- Follow-up Section -->
+                            <div style="border:1px solid var(--border, #e2e8f0); border-radius:8px; padding:14px; margin-bottom:4px; background:var(--surface-alt, rgba(99,102,241,0.04));">
+                                <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--accent,#6366f1); margin-bottom:12px;">📅 Next Follow-up</div>
+                                <div class="grid-2">
+                                    <div class="form-group">
+                                        <label class="form-label" for="crm-followup">Date</label>
+                                        <input type="date" id="crm-followup" class="form-control">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="crm-followup-time">Time</label>
+                                        <input type="time" id="crm-followup-time" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="crm-followup-type">Follow-up Type</label>
+                                    <select id="crm-followup-type" class="form-control">
+                                        <option value="">— Select Type —</option>
+                                        <option value="Call">📞 Call</option>
+                                        <option value="WhatsApp">💬 WhatsApp</option>
+                                        <option value="Email">✉️ Email</option>
+                                        <option value="Meeting">🤝 Meeting</option>
+                                        <option value="Site Visit">🏢 Site Visit</option>
+                                        <option value="Demo">🖥️ Demo</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label class="form-label" for="crm-followup-notes">Follow-up Notes</label>
+                                    <textarea id="crm-followup-notes" class="form-control" style="height:70px;" placeholder="What to discuss, what to pitch, any prep needed..."></textarea>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="crm-tags">Tags</label>
+                                <input type="text" id="crm-tags" class="form-control" placeholder="real estate, chennai, premium">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="crm-notes">Notes</label>
+                                <textarea id="crm-notes" class="form-control" style="height: 90px;" placeholder="What did you notice, what should be pitched, what happened in the last conversation?"></textarea>
+                            </div>
+                            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa-solid fa-plus"></i> Save Lead
+                                </button>
+                                <button type="button" class="btn btn-outline" data-crm-action="create-quote" style="border-color: var(--accent-color); color: var(--text-primary);">
+                                    <i class="fa-solid fa-file-pen"></i> Create Quotation for Lead
+                                </button>
+                                <button id="crm-form-reset" type="button" class="btn btn-outline">
+                                    Reset
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+        </div>
 
     <!-- Toast Container -->
     <div id="toast-container"

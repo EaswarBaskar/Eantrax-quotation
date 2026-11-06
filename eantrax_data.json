@@ -1,0 +1,184 @@
+{
+  "documents": [
+    {
+      "client": {
+        "address": "Chennai",
+        "email": "96photography@gmail.com",
+        "name": "Arun Rajendran",
+        "phone": "7363939733"
+      },
+      "created_at": "2026-08-11T13:54:27.308Z",
+      "date": "2026-08-11",
+      "exclusions": "- Domain Registration\n- Hosting Charges\n- Business Email Setup\n- Product Catalogue PDF Creation\n- Logo Design\n- Content Writing (If not provided)\n- Additional Pages Beyond 5\n- Dynamic/Admin Panel Features",
+      "expense": 0,
+      "gstNotApplicable": true,
+      "id": "QT-1072",
+      "items": [
+        {
+          "desc": "Basic Static Website Development",
+          "isRecurring": false,
+          "price": 9999,
+          "qty": 1,
+          "recurringPeriod": ""
+        }
+      ],
+      "paymentTerms": "50% Advance to Initiate Project\n50% Before Final Deployment\n\nProject starts only after advance confirmation.",
+      "scope": "- 5 Pages (Home, About Us, Products, Infrastructure, Contact)\n- Mobile Responsive Design\n- Contact Enquiry Form (Email Integration)\n- WhatsApp Chat Button\n- Google Maps Integration\n- Basic On-Page SEO Setup\n- 2 Revision Rounds",
+      "status": "draft",
+      "timeline": "7-10 working days (Subject to receiving all required content)",
+      "totals": {
+        "advance": 0,
+        "balance": 9999,
+        "discount": 0,
+        "grandTotal": 9999,
+        "subtotal": 9999,
+        "taxAmount": 0,
+        "taxEnabled": false
+      },
+      "type": "quotation"
+    },
+    {
+      "client": {
+        "address": "Coimbatore",
+        "email": "",
+        "name": "Selvam (Tekton press tools)",
+        "phone": "6380399378"
+      },
+      "created_at": "2026-02-18T15:21:24.969Z",
+      "date": "2026-02-18",
+      "exclusions": "- Business Email Setup Beyond 1\n- Product Catalogue PDF Creation\n- Content Writing (If not provided)\n- Additional Pages Beyond 5\n- Dynamic/Admin Panel Features",
+      "expense": 0,
+      "gstNotApplicable": true,
+      "id": "QT-1069",
+      "items": [
+        {
+          "desc": "Basic Static Website Development - Manufacturing Company",
+          "isRecurring": false,
+          "price": 9999,
+          "qty": 1,
+          "recurringPeriod": ""
+        },
+        {
+          "desc": "Domain Name (in & com)",
+          "isRecurring": true,
+          "price": 2499,
+          "qty": 1,
+          "recurringPeriod": "Annually"
+        },
+        {
+          "desc": "Cloud Web Hosting",
+          "isRecurring": true,
+          "price": 2499,
+          "qty": 1,
+          "recurringPeriod": "Annually"
+        },
+        {
+          "desc": "Website Maintenance",
+          "isRecurring": true,
+          "price": 4999,
+          "qty": 1,
+          "recurringPeriod": "Annually"
+        }
+      ],
+      "paymentTerms": "50% Advance to Initiate Project\n50% Before Final Deployment\n\nProject starts only after advance confirmation.",
+      "scope": "- 5 Pages (Home, About Us, Products, Infrastructure, Contact)\n- Mobile Responsive Design\n- Contact Enquiry Form (Email Integration)\n- WhatsApp Chat Button\n- Google Maps Integration\n- Basic On-Page SEO Setup\n- 2 Revision Rounds\n- Logo Design\n- 1 Business Email Setup",
+      "status": "viewed",
+      "timeline": "7-10 working days (Subject to receiving all required content)",
+      "totals": {
+        "advance": 19996,
+        "balance": 0,
+        "discount": 0,
+        "grandTotal": 19996,
+        "subtotal": 19996,
+        "taxAmount": 0,
+        "taxEnabled": false
+      },
+      "type": "quotation",
+      "updated_at": "2026-02-21T14:23:03.924Z"
+    }
+  ],
+  "clients": [
+    {
+      "address": "Chennai",
+      "email": "easwarbaskar25@gmail.com",
+      "name": "Easwar",
+      "phone": "8681971839"
+    },
+    {
+      "address": "Chennai",
+      "email": "96photography@gmail.com",
+      "name": "Arun Rajendran",
+      "phone": "7363939733"
+    },
+    {
+      "address": "Coimbatore",
+      "email": "easwarbaskar25@gmail.com",
+      "name": "Naveen",
+      "phone": "9842430460"
+    },
+    {
+      "address": "Coimbatore",
+      "email": "",
+      "name": "Selvam (Tekton press tools)",
+      "phone": "6380399378"
+    }
+  ],
+  "crm": {
+    "leads": []
+  },
+  "catalog": [
+    {
+      "exclusions": "- Domain Registration\n- Hosting Charges\n- Business Email Setup\n- Product Catalogue PDF Creation\n- Logo Design\n- Content Writing (If not provided)\n- Additional Pages Beyond 5\n- Dynamic/Admin Panel Features",
+      "isRecurring": false,
+      "name": "Basic Static Website Development - Manufacturing Company",
+      "paymentTerms": "50% Advance to Initiate Project\n50% Before Final Deployment\n\nProject starts only after advance confirmation.",
+      "price": 9999,
+      "recurringPeriod": "",
+      "scope": "- 5 Pages (Home, About Us, Products, Infrastructure, Contact)\n- Mobile Responsive Design\n- Contact Enquiry Form (Email Integration)\n- WhatsApp Chat Button\n- Google Maps Integration\n- Basic On-Page SEO Setup\n- 2 Revision Rounds",
+      "timeline": "7-10 working days (Subject to receiving all required content)"
+    },
+    {
+      "isRecurring": true,
+      "name": "Domain Name (in & com)",
+      "price": 2499,
+      "recurringPeriod": "Annually"
+    },
+    {
+      "isRecurring": true,
+      "name": "Cloud Web Hosting",
+      "price": 2499,
+      "recurringPeriod": "Annually"
+    },
+    {
+      "isRecurring": true,
+      "name": "Website Maintenance",
+      "price": 4999,
+      "recurringPeriod": "Annually"
+    }
+  ],
+  "settings": {
+    "companyName": "Eantrax Web Solutions & AI Integration",
+    "address": "29/67, 33rd GKM Colony, Kolathur, \nChennai - 82",
+    "email": "contact@eantrax.com",
+    "phone": "8681971839",
+    "currency": "₹",
+    "taxRate": 18,
+    "nextQuoteId": 1073,
+    "nextInvoiceId": 5014,
+    "logoUrl": "logo.png",
+    "website": "www.eantrax.com",
+    "tagline": "Quotation Mgr",
+    "bankDetails": "easwarbaskar25@okaxis",
+    "terms": "1. Warranty: 30 days technical support after deployment.\n2. IP Rights: Ownership transfers to client only after full payment.\n3. Jurisdication: All disputes are subject to local jurisdiction.",
+    "validity": 30,
+    "advanceClause": "50% advance required before project start.",
+    "brandColor": "#0066ff",
+    "signatureUrl": "signature.jpg",
+    "paymentQrUrl": "qr.jpg",
+    "gstRegistered": false,
+    "isGstRegistered": false,
+    "plan": "premium",
+    "qrCodeUrl": "",
+    "upiId": ""
+  }
+}

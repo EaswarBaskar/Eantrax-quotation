@@ -3,10 +3,7 @@
     "users": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
-        ".write": "auth != null && auth.uid === $uid",
-        "app_data": {
-          ".validate": "newData.hasChildren(['documents', 'clients', 'catalog', 'settings'])"
-        }
+        ".write": "auth != null && auth.uid === $uid"
       }
     }
   }
