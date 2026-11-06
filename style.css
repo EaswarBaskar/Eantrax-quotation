@@ -816,7 +816,12 @@ h1 {
     grid-template-columns: repeat(3, minmax(36px, 1fr));
     gap: 6px;
     min-width: 170px;
-    z-index: 20;
+    z-index: 1000;
+}
+
+tr:has(.action-menu[open]) {
+    position: relative;
+    z-index: 50;
 }
 
 .action-menu:not([open]) .action-popover {
@@ -827,13 +832,6 @@ h1 {
     width: 100%;
     justify-content: center;
     padding: 8px 10px;
-}
-
-@media (max-width: 768px) {
-    .action-popover {
-        grid-template-columns: repeat(2, minmax(36px, 1fr));
-        min-width: 130px;
-    }
 }
 
 table {
@@ -1544,10 +1542,57 @@ th {
         justify-content: flex-start; flex-wrap: wrap; gap: 6px;
     }
 
-    .invoice-table-wrap .row-actions { flex-wrap: wrap; gap: 6px; }
-    .invoice-table-wrap .row-actions .btn { font-size: 0.75rem; padding: 6px 10px; }
+    .invoice-table-wrap .row-actions {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+    }
+    .invoice-table-wrap .row-actions .btn { font-size: 0.8rem; padding: 7px 12px; }
     .invoice-table-wrap .badge { min-width: unset !important; font-size: 0.7rem; padding: 4px 10px; }
-    .action-popover { right: auto; left: 0; }
+
+    /* Fix mobile action-menu popover overlapping subsequent cards */
+    .invoice-table-wrap .action-menu {
+        position: static;
+    }
+    .invoice-table-wrap .action-menu[open] {
+        width: 100%;
+    }
+    .invoice-table-wrap .action-menu[open] .action-more {
+        background: #0f172a !important;
+        color: white !important;
+        border-color: #0f172a !important;
+    }
+    .invoice-table-wrap .action-menu[open] .action-popover {
+        position: static !important;
+        width: 100% !important;
+        margin-top: 8px !important;
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 10px !important;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+        padding: 8px !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        min-width: unset !important;
+        z-index: auto !important;
+        box-sizing: border-box !important;
+    }
+    .invoice-table-wrap .action-menu[open] .action-popover .btn {
+        flex: 1 1 calc(25% - 8px);
+        min-width: 44px;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        background: white;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        box-sizing: border-box;
+    }
 
     /* ============================================
        CLIENTS TABLE -> MOBILE CARD LIST
