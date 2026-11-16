@@ -1,24 +1,17 @@
 console.log('App script starting...');
 
-// --- CLOUD SYNC SETTINGS (FIREBASE) ---
-// 1. Create a free project at https://console.firebase.google.com/
-// 2. Add a 'Web App' to your Firebase project and copy the config object here
-// 3. In Firebase left menu, go to Build > Realtime Database > Create Database
-// 4. In Realtime Database 'Rules' tab, set read and write to "true" (for testing)
-// 5. Change ENABLE_CLOUD_SYNC to true
+// --- CLOUD SYNC SETTINGS (SUPABASE) ---
 const ENABLE_CLOUD_SYNC = true;
-const firebaseConfig = {
-    apiKey: "AIzaSyDE8zu9Nq76fusDV2vKPDXsq9RG0ncdEkQ",
-    authDomain: "quotation-d7c3f.firebaseapp.com",
-    databaseURL: "https://quotation-d7c3f-default-rtdb.firebaseio.com",
-    projectId: "quotation-d7c3f",
-    storageBucket: "quotation-d7c3f.firebasestorage.app",
-    messagingSenderId: "682651960593",
-    appId: "1:682651960593:web:ea5e774f25e0b445f2b8b0"
-};
+const SUPABASE_URL = "https://gstiopyiqmkbmkdfnkqv.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_mUvjaTmCE7PwpTCiAUq_3w_236Nj6wg";
 
-if (ENABLE_CLOUD_SYNC && typeof firebase !== 'undefined' && !firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
+let supabaseClient = null;
+if (ENABLE_CLOUD_SYNC && typeof supabase !== 'undefined' && typeof supabase.createClient === 'function') {
+    try {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } catch (e) {
+        console.error("Failed to initialize Supabase client:", e);
+    }
 }
 // --------------------------------------
 
@@ -351,7 +344,7 @@ window.app = {
         if (this.started) return;
         this.setupUiEvents();
 
-        if (typeof ENABLE_CLOUD_SYNC !== 'undefined' && ENABLE_CLOUD_SYNC && typeof firebase !== 'undefined' && typeof firebase.auth === 'function') {
+        if (typeof ENABLE_CLOUD_SYNC !== 'undefined' && ENABLE_CLOUD_SYNC && supabaseClient) {
             this.setupAuthHandlers();
             return;
         }
@@ -438,7 +431,6 @@ window.app = {
         if (this.authBound) return;
         this.authBound = true;
 
-        const auth = firebase.auth();
         const authScreen = document.getElementById('auth-screen');
         const emailEl = document.getElementById('auth-email');
         const passEl = document.getElementById('auth-password');
@@ -466,8 +458,11 @@ window.app = {
                 setAuthBusy(true);
                 setAuthError('');
                 try {
-                    const provider = new firebase.auth.GoogleAuthProvider();
-                    await auth.signInWithPopup(provider);
+                    const { error } = await supabaseClient.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: { redirectTo: window.location.origin + window.location.pathname }
+                    });
+                    if (error) throw error;
                 } catch (e) {
                     setAuthError(e && e.message ? e.message : 'Google login failed.');
                 } finally {
@@ -485,11 +480,7 @@ window.app = {
         if (logoutBtn) {
             logoutBtn.addEventListener('click', async () => {
                 try {
-                    if (this.cloudListenerRef) {
-                        this.cloudListenerRef.off();
-                        this.cloudListenerRef = null;
-                    }
-                    await auth.signOut();
+                    await supabaseClient.auth.signOut();
                     window.location.reload();
                 } catch (e) {
                     this.showToast('Logout Failed', 'Please try again.', 'error');
@@ -507,7 +498,11 @@ window.app = {
                 setAuthBusy(true);
                 setAuthError('');
                 try {
-                    await auth.signInWithEmailAndPassword(email, password);
+                    const { data, error } = await supabaseClient.auth.signInWithPassword({
+                        email: email,
+                        password: password
+                    });
+                    if (error) throw error;
                 } catch (e) {
                     setAuthError(e && e.message ? e.message : 'Login failed.');
                 } finally {
@@ -530,7 +525,14 @@ window.app = {
                 setAuthBusy(true);
                 setAuthError('');
                 try {
-                    await auth.createUserWithEmailAndPassword(email, password);
+                    const { data, error } = await supabaseClient.auth.signUp({
+                        email: email,
+                        password: password
+                    });
+                    if (error) throw error;
+                    if (data?.user && !data.session) {
+                        setAuthError('Registration successful! Please check your email to confirm your account.');
+                    }
                 } catch (e) {
                     setAuthError(e && e.message ? e.message : 'Registration failed.');
                 } finally {
@@ -539,22 +541,19 @@ window.app = {
             });
         }
 
-        auth.onAuthStateChanged((user) => {
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            const user = session?.user;
             const loggedIn = !!user;
             if (authScreen) authScreen.style.display = loggedIn ? 'none' : 'flex';
             if (logoutBtn) logoutBtn.style.display = loggedIn ? 'inline-flex' : 'none';
 
             if (!loggedIn) {
-                if (this.cloudListenerRef) {
-                    this.cloudListenerRef.off();
-                    this.cloudListenerRef = null;
-                }
                 this.currentUserId = null;
                 this.updateSyncStatus('offline');
                 return;
             }
 
-            this.currentUserId = user.uid;
+            this.currentUserId = user.id;
             if (!this.started) {
                 this.startApp();
             } else {
@@ -566,11 +565,6 @@ window.app = {
     getLocalStorageKey() {
         if (!this.currentUserId || this.currentUserId === 'local') return 'eantrax_data';
         return `eantrax_data_${this.currentUserId}`;
-    },
-
-    getCloudRef() {
-        if (!this.currentUserId) return null;
-        return firebase.database().ref(`users/${this.currentUserId}/app_data`);
     },
 
     applySettings() {
@@ -625,95 +619,46 @@ window.app = {
         if (sidebarTag) sidebarTag.textContent = s.tagline || "Quotation";
     },
 
-    loadData() {
+    async loadData() {
         this.loadDataFromLocal();
 
-        if (typeof ENABLE_CLOUD_SYNC !== 'undefined' && ENABLE_CLOUD_SYNC && typeof firebase !== 'undefined' && this.currentUserId && this.currentUserId !== 'local') {
-            const dbRef = this.getCloudRef();
-            if (!dbRef) return;
-
+        if (typeof ENABLE_CLOUD_SYNC !== 'undefined' && ENABLE_CLOUD_SYNC && supabaseClient && this.currentUserId && this.currentUserId !== 'local') {
             this.updateSyncStatus('syncing');
 
-            // 7-second safety timeout so UI never hangs permanently in 'Syncing...'
-            let isSettled = false;
-            const timeoutId = setTimeout(() => {
-                if (!isSettled) {
-                    isSettled = true;
-                    console.warn("Cloud load timed out. Falling back to local data and offline state.");
+            try {
+                const { data, error } = await supabaseClient
+                    .from('user_data')
+                    .select('data')
+                    .eq('user_id', this.currentUserId)
+                    .maybeSingle();
+
+                if (error) {
+                    console.error("Supabase load error:", error);
                     this.updateSyncStatus('offline');
+                    return;
                 }
-            }, 7000);
 
-            dbRef.once('value').then((snapshot) => {
-                if (isSettled) return;
-                isSettled = true;
-                clearTimeout(timeoutId);
-
-                const cloudData = snapshot.val();
-                if (cloudData) {
-                    console.log("Cloud data loaded successfully.");
-                    this.data = this.normalizeLoadedData(cloudData);
+                if (data && data.data) {
+                    console.log("Supabase cloud data loaded successfully.");
+                    this.data = this.normalizeLoadedData(data.data);
                     this.saveToLocalOnly();
                     this.initialCloudLoaded = true;
                     this.updateSyncStatus('synced');
                     this.refreshActiveViews();
                 } else {
-                    console.log("No cloud data found. Uploading initial local data to cloud.");
+                    console.log("No Supabase cloud data found. Uploading initial local data.");
                     this.initialCloudLoaded = true;
                     this.saveData();
                 }
-
-                // Attach real-time sync listener for multi-device live sync
-                this.setupRealtimeSync(dbRef);
-            }).catch(error => {
-                if (isSettled) return;
-                isSettled = true;
-                clearTimeout(timeoutId);
-
-                console.error("Firebase read error:", error);
+            } catch (err) {
+                console.error("Supabase read exception:", err);
                 this.updateSyncStatus('offline');
-                this.setupRealtimeSync(dbRef);
-            });
+            }
         }
     },
 
-    setupRealtimeSync(dbRef) {
-        if (!dbRef) return;
-
-        if (this.cloudListenerRef) {
-            this.cloudListenerRef.off();
-            this.cloudListenerRef = null;
-        }
-
-        this.cloudListenerRef = dbRef;
-        dbRef.on('value', (snapshot) => {
-            // Ignore echo of our own recent write
-            if (this.isInternalCloudWrite) {
-                this.isInternalCloudWrite = false;
-                return;
-            }
-
-            const cloudData = snapshot.val();
-            if (cloudData) {
-                console.log("Realtime multi-device update received.");
-                this.data = this.normalizeLoadedData(cloudData);
-                this.saveToLocalOnly();
-                this.updateSyncStatus('synced');
-                this.refreshActiveViews();
-            }
-        }, (error) => {
-            console.error("Firebase realtime sync error:", error);
-            this.updateSyncStatus('error');
-        });
-
-        // Real-time connection status listener
-        if (!this.connectedListenerBound && typeof firebase !== 'undefined' && firebase.database) {
-            this.connectedListenerBound = true;
-            firebase.database().ref('.info/connected').on('value', (snap) => {
-                const isConnected = snap.val() === true;
-                this.updateSyncStatus(isConnected ? 'synced' : 'offline');
-            });
-        }
+    setupRealtimeSync() {
+        // Supabase REST sync handles reads and writes cleanly without persistent WebSockets
     },
 
     refreshActiveViews() {
@@ -955,34 +900,26 @@ window.app = {
         this.saveToLocalOnly();
 
         // Push to cloud if enabled
-        if (typeof ENABLE_CLOUD_SYNC !== 'undefined' && ENABLE_CLOUD_SYNC && typeof firebase !== 'undefined' && this.currentUserId && this.currentUserId !== 'local') {
-            const dbRef = this.getCloudRef();
-            if (!dbRef) return true;
-
-            this.isInternalCloudWrite = true;
+        if (typeof ENABLE_CLOUD_SYNC !== 'undefined' && ENABLE_CLOUD_SYNC && supabaseClient && this.currentUserId && this.currentUserId !== 'local') {
             this.updateSyncStatus('syncing');
 
-            let writeSettled = false;
-            const writeTimeout = setTimeout(() => {
-                if (!writeSettled) {
-                    writeSettled = true;
-                    console.warn("Cloud save timed out. Marking offline.");
-                    this.updateSyncStatus('offline');
-                }
-            }, 7000);
-
-            dbRef.set(this.data)
-                .then(() => {
-                    if (writeSettled) return;
-                    writeSettled = true;
-                    clearTimeout(writeTimeout);
-                    this.updateSyncStatus('synced');
+            supabaseClient
+                .from('user_data')
+                .upsert({
+                    user_id: this.currentUserId,
+                    data: this.data,
+                    updated_at: new Date().toISOString()
                 })
-                .catch(error => {
-                    if (writeSettled) return;
-                    writeSettled = true;
-                    clearTimeout(writeTimeout);
-                    console.error("Firebase write error:", error);
+                .then(({ error }) => {
+                    if (error) {
+                        console.error("Supabase write error:", error);
+                        this.updateSyncStatus('error');
+                    } else {
+                        this.updateSyncStatus('synced');
+                    }
+                })
+                .catch(err => {
+                    console.error("Supabase write exception:", err);
                     this.updateSyncStatus('error');
                 });
         }

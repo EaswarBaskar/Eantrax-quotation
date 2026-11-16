@@ -24,10 +24,8 @@
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.12.1/html2pdf.bundle.min.js"
         integrity="sha512-D25Z8/1q2z65ZpJ3NzY6XiPZfwjhbv34OTQHDIZd+KPK+uWCovGt+fMkSzW8ArzCMFUgZt6Cdu7qoXNuy6a2GA=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <!-- Firebase -->
-    <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-    <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
@@ -51,7 +49,7 @@
             <i class="fa-solid fa-bars"></i>
         </button>
         <span style="font-weight: 700; font-size: 1rem; letter-spacing: 2px;">EANTRAX</span>
-        <div id="mobile-sync-status" class="cloud-sync-pill synced" title="Firebase Cloud Sync (Tap to Sync)"><i class="fa-solid fa-cloud"></i> <span>Synced</span></div>
+        <div id="mobile-sync-status" class="cloud-sync-pill synced" title="Supabase Cloud Sync (Tap to Sync)"><i class="fa-solid fa-cloud"></i> <span>Synced</span></div>
     </div>
 
     <!-- Mobile Overlay -->
@@ -77,7 +75,7 @@
                         style="font-weight: 500; font-size: 0.7rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px;">Quotation</span>
                 </div>
                 <div style="display: flex; justify-content: center; width: 100%;">
-                    <div id="desktop-sync-status" class="cloud-sync-pill synced" title="Firebase Cloud Sync (Click to Sync)">
+                    <div id="desktop-sync-status" class="cloud-sync-pill synced" title="Supabase Cloud Sync (Click to Sync)">
                         <i class="fa-solid fa-cloud"></i> <span>Cloud Synced</span>
                     </div>
                 </div>
