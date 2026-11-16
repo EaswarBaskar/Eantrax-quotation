@@ -634,7 +634,21 @@ window.app = {
 
             this.updateSyncStatus('syncing');
 
+            // 7-second safety timeout so UI never hangs permanently in 'Syncing...'
+            let isSettled = false;
+            const timeoutId = setTimeout(() => {
+                if (!isSettled) {
+                    isSettled = true;
+                    console.warn("Cloud load timed out. Falling back to local data and offline state.");
+                    this.updateSyncStatus('offline');
+                }
+            }, 7000);
+
             dbRef.once('value').then((snapshot) => {
+                if (isSettled) return;
+                isSettled = true;
+                clearTimeout(timeoutId);
+
                 const cloudData = snapshot.val();
                 if (cloudData) {
                     console.log("Cloud data loaded successfully.");
@@ -652,6 +666,10 @@ window.app = {
                 // Attach real-time sync listener for multi-device live sync
                 this.setupRealtimeSync(dbRef);
             }).catch(error => {
+                if (isSettled) return;
+                isSettled = true;
+                clearTimeout(timeoutId);
+
                 console.error("Firebase read error:", error);
                 this.updateSyncStatus('offline');
                 this.setupRealtimeSync(dbRef);
@@ -944,11 +962,26 @@ window.app = {
             this.isInternalCloudWrite = true;
             this.updateSyncStatus('syncing');
 
+            let writeSettled = false;
+            const writeTimeout = setTimeout(() => {
+                if (!writeSettled) {
+                    writeSettled = true;
+                    console.warn("Cloud save timed out. Marking offline.");
+                    this.updateSyncStatus('offline');
+                }
+            }, 7000);
+
             dbRef.set(this.data)
                 .then(() => {
+                    if (writeSettled) return;
+                    writeSettled = true;
+                    clearTimeout(writeTimeout);
                     this.updateSyncStatus('synced');
                 })
                 .catch(error => {
+                    if (writeSettled) return;
+                    writeSettled = true;
+                    clearTimeout(writeTimeout);
                     console.error("Firebase write error:", error);
                     this.updateSyncStatus('error');
                 });
@@ -2975,7 +3008,13 @@ ${company}`;
         const ctx = document.getElementById(canvasId);
         if (!ctx) return;
 
-        if (this.charts[canvasId]) this.charts[canvasId].destroy();
+        const currency = this.data.settings?.currency || '\u20B9';
+
+        const existingChart = Chart.getChart(ctx) || this.charts[canvasId];
+        if (existingChart) {
+            existingChart.destroy();
+            delete this.charts[canvasId];
+        }
 
         const timeframe = this.chartTimeframe || 'month';
         let labels = [];
