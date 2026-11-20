@@ -319,6 +319,7 @@ window.app = {
     activeModalId: null,
     previousFocus: null,
     documentsStatusFilter: 'all',
+    documentsTypeFilter: 'all',
     clientSearchText: '',
     clientSortMode: 'name-asc',
     catalogSearchText: '',
@@ -1501,6 +1502,20 @@ window.app = {
             });
         }
 
+        const docTypeTabs = document.getElementById('doc-type-toggle');
+        if (docTypeTabs) {
+            docTypeTabs.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-type]');
+                if (!button) return;
+                this.documentsTypeFilter = button.getAttribute('data-type') || 'all';
+                docTypeTabs.querySelectorAll('.doc-type-tab').forEach((el) => {
+                    el.classList.toggle('active', el === button);
+                });
+                this.updateVisibleStatusFilters();
+                this.renderDocumentsList();
+            });
+        }
+
         const statusFilters = document.getElementById('doc-status-filters');
         if (statusFilters) {
             statusFilters.addEventListener('click', (event) => {
@@ -1513,6 +1528,30 @@ window.app = {
                 this.renderDocumentsList();
             });
         }
+
+        document.addEventListener('click', (event) => {
+            const jumpBtn = event.target.closest('.linked-doc-jump');
+            if (jumpBtn) {
+                event.preventDefault();
+                const targetId = jumpBtn.getAttribute('data-jump-id');
+                if (!targetId) return;
+                const targetDoc = (this.data.documents || []).find(d => d.id === targetId);
+                if (targetDoc) {
+                    this.documentsTypeFilter = targetDoc.type || 'all';
+                    const tabs = document.getElementById('doc-type-toggle');
+                    if (tabs) {
+                        tabs.querySelectorAll('.doc-type-tab').forEach(el => {
+                            el.classList.toggle('active', el.getAttribute('data-type') === this.documentsTypeFilter);
+                        });
+                    }
+                    this.documentsStatusFilter = 'all';
+                    this.updateVisibleStatusFilters();
+                    const searchInput = document.getElementById('invoices-search');
+                    if (searchInput) searchInput.value = targetId;
+                    this.renderDocumentsList(targetId);
+                }
+            }
+        });
 
         document.addEventListener('click', (event) => {
             document.querySelectorAll('.action-menu[open]').forEach((menu) => {
@@ -3140,6 +3179,7 @@ ${company}`;
             'viewed': ['accepted', 'rejected', 'cancelled'],
             'accepted': ['invoiced', 'proforma'],
             'invoiced': ['paid', 'overdue'],
+            'pending': ['paid', 'overdue', 'cancelled'],
             'overdue': ['paid'],
             'proforma': ['invoiced', 'paid', 'cancelled'], // Proforma can advance to invoice/paid
             'paid': [], // Terminal
@@ -3197,11 +3237,47 @@ ${company}`;
         set('iq-outstanding', fmt(outstandingAmount));
     },
 
+    updateVisibleStatusFilters() {
+        const type = this.documentsTypeFilter || 'all';
+        const filterButtons = document.querySelectorAll('#doc-status-filters [data-filter]');
+        let currentFilterStillVisible = false;
+
+        filterButtons.forEach(btn => {
+            const allowedTypes = (btn.getAttribute('data-types') || 'all,quotation,invoice').split(',');
+            const isVisible = type === 'all' || allowedTypes.includes(type);
+            btn.style.display = isVisible ? '' : 'none';
+            if (isVisible && btn.getAttribute('data-filter') === this.documentsStatusFilter) {
+                currentFilterStillVisible = true;
+            }
+        });
+
+        // If active filter was hidden by type toggle, reset to 'all'
+        if (!currentFilterStillVisible) {
+            this.documentsStatusFilter = 'all';
+            filterButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-filter') === 'all');
+            });
+        }
+    },
+
     renderDocumentsList(filter) {
         const tbody = document.querySelector('#documents-table tbody');
         if (!tbody) return;
 
         this.renderInvoiceStats();
+        this.updateVisibleStatusFilters();
+
+        const allDocs = this.data.documents || [];
+        const countAll = allDocs.length;
+        const countQuotes = allDocs.filter(d => (d.type || 'quotation') === 'quotation').length;
+        const countInvoices = allDocs.filter(d => d.type === 'invoice').length;
+
+        const elAll = document.getElementById('count-all');
+        const elQuotes = document.getElementById('count-quotes');
+        const elInvoices = document.getElementById('count-invoices');
+        if (elAll) elAll.textContent = countAll;
+        if (elQuotes) elQuotes.textContent = countQuotes;
+        if (elInvoices) elInvoices.textContent = countInvoices;
 
         tbody.innerHTML = '';
         const currency = this.data.settings.currency || '\u20B9';
@@ -3209,16 +3285,26 @@ ${company}`;
             ? filter
             : ((document.getElementById('invoices-search') || {}).value || '');
 
-        let docs = [...this.data.documents];
+        let docs = [...allDocs];
+
+        // 1. Filter by Document Type
+        const typeFilter = this.documentsTypeFilter || 'all';
+        if (typeFilter !== 'all') {
+            docs = docs.filter(d => (d.type || 'quotation') === typeFilter);
+        }
+
+        // 2. Filter by Search Query
         if (searchText) {
             const f = searchText.toLowerCase();
             docs = docs.filter(d =>
                 (d.id || '').toLowerCase().includes(f) ||
-                (d.client.name || '').toLowerCase().includes(f) ||
-                (d.type || '').split(' ').some(word => word.toLowerCase().includes(f))
+                (d.client && d.client.name ? d.client.name.toLowerCase().includes(f) : false) ||
+                (d.type || '').toLowerCase().includes(f) ||
+                (d.linkedQuote && d.linkedQuote.toLowerCase().includes(f))
             );
         }
 
+        // 3. Filter by Status
         if (this.documentsStatusFilter && this.documentsStatusFilter !== 'all') {
             docs = docs.filter(d => (d.status || 'draft') === this.documentsStatusFilter);
         }
@@ -3229,6 +3315,20 @@ ${company}`;
             const numB = parseInt((b.id || '').replace(/\D/g, '')) || 0;
             return numB - numA;
         });
+
+        if (sortedDocs.length === 0) {
+            const tr = document.createElement('tr');
+            const typeLabel = typeFilter === 'quotation' ? 'quotations' : (typeFilter === 'invoice' ? 'invoices' : 'documents');
+            tr.innerHTML = `
+                <td colspan="7" style="text-align: center; padding: 48px 20px; color: #94a3b8;">
+                    <i class="fa-solid fa-folder-open" style="font-size: 2.2rem; margin-bottom: 10px; display: block; opacity: 0.4;"></i>
+                    <p style="margin: 0; font-size: 0.95rem; font-weight: 600;">No ${typeLabel} found</p>
+                    <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #94a3b8;">Try changing the filter or search keywords</p>
+                </td>
+            `;
+            tbody.appendChild(tr);
+            return;
+        }
 
         sortedDocs.forEach(doc => {
             try {
@@ -3242,11 +3342,34 @@ ${company}`;
                     <div style="font-size:0.75rem; color:#ef4444; font-weight:600;" title="Remaining Balance">Bal: ${currency}${doc.totals.balance.toFixed(2)}</div>
                 ` : '';
 
+                // Type display with cross-link between Quotation and Invoice
+                let typeBadge = '';
+                if (doc.type === 'invoice') {
+                    const fromQuote = doc.linkedQuote ? `
+                        <div style="font-size:0.72rem; margin-top:3px;">
+                            <span class="linked-doc-jump" data-jump-id="${doc.linkedQuote}" title="View original Quotation ${doc.linkedQuote}">
+                                <i class="fa-solid fa-link"></i> From ${doc.linkedQuote}
+                            </span>
+                        </div>
+                    ` : '';
+                    typeBadge = `<span class="type-chip type-chip-invoice">Invoice</span>${fromQuote}`;
+                } else {
+                    const linkedInv = allDocs.find(d => d.linkedQuote === doc.id);
+                    const toInvoice = linkedInv ? `
+                        <div style="font-size:0.72rem; margin-top:3px;">
+                            <span class="linked-doc-jump" data-jump-id="${linkedInv.id}" title="View converted Invoice ${linkedInv.id}">
+                                <i class="fa-solid fa-arrow-right"></i> ${linkedInv.id}
+                            </span>
+                        </div>
+                    ` : (doc.status === 'invoiced' ? '<div style="font-size:0.72rem; color:#8b5cf6; font-weight:600; margin-top:2px;">Invoiced</div>' : '');
+                    typeBadge = `<span class="type-chip type-chip-quote">Quotation</span>${toInvoice}`;
+                }
+
                 tr.innerHTML = `
                     <td>${doc.id}</td>
                     <td>${doc.date}</td>
                     <td>${clientName}</td>
-                    <td style="text-transform: capitalize">${doc.type}</td>
+                    <td>${typeBadge}</td>
                     <td style="font-weight: 700;">${currency}${parseFloat(total).toFixed(2)}${advInfo}</td>
                     <td>
                         ${(() => {
@@ -3254,7 +3377,7 @@ ${company}`;
                             const labels = {
                                 'draft': 'Draft', 'sent': 'Sent', 'viewed': 'Viewed',
                                 'accepted': 'Accepted', 'invoiced': 'Invoiced',
-                                'proforma': 'Proforma Invoice', 'paid': 'Paid',
+                                'pending': 'Pending', 'proforma': 'Proforma Invoice', 'paid': 'Paid',
                                 'overdue': 'Overdue', 'cancelled': 'Cancelled', 'rejected': 'Rejected'
                             };
                             const isTerminal = ['paid', 'cancelled', 'rejected'].includes(doc.status);
@@ -3370,6 +3493,16 @@ ${company}`;
         this.data.documents.unshift(newInvoice);
         this.data.settings.nextInvoiceId++;
         if (!this.saveData()) return;
+
+        // Switch to Invoices tab to show the new invoice
+        this.documentsTypeFilter = 'invoice';
+        const docTabs = document.getElementById('doc-type-toggle');
+        if (docTabs) {
+            docTabs.querySelectorAll('.doc-type-tab').forEach(el => {
+                el.classList.toggle('active', el.getAttribute('data-type') === 'invoice');
+            });
+        }
+        this.updateVisibleStatusFilters();
         this.renderDocumentsList(); // Switch view
         this.renderDashboard();
         this.showToast('Success', `Converted to Invoice ${newInvoice.id}. You can now record payments.`, 'success');

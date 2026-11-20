@@ -503,17 +503,33 @@
 
                 </div>
 
+                <!-- Document Type Segmented Tabs: Quotations vs Invoices -->
+                <div class="doc-type-tabs-container">
+                    <div class="doc-type-tabs" id="doc-type-toggle" role="tablist" aria-label="Filter documents by type">
+                        <button type="button" class="doc-type-tab active" data-type="all">
+                            <i class="fa-solid fa-layer-group"></i> All Documents <span class="tab-badge" id="count-all">0</span>
+                        </button>
+                        <button type="button" class="doc-type-tab" data-type="quotation">
+                            <i class="fa-solid fa-file-lines"></i> Quotations <span class="tab-badge" id="count-quotes">0</span>
+                        </button>
+                        <button type="button" class="doc-type-tab" data-type="invoice">
+                            <i class="fa-solid fa-file-invoice-dollar"></i> Invoices <span class="tab-badge" id="count-invoices">0</span>
+                        </button>
+                    </div>
+                </div>
+
                 <div class="invoice-controls" id="doc-status-filters" role="tablist"
                     aria-label="Filter documents by status">
-                    <button type="button" class="status-filter active" data-filter="all">All</button>
-                    <button type="button" class="status-filter" data-filter="draft">Draft</button>
-                    <button type="button" class="status-filter" data-filter="sent">Sent</button>
-                    <button type="button" class="status-filter" data-filter="viewed">Viewed</button>
-                    <button type="button" class="status-filter" data-filter="accepted">Accepted</button>
-                    <button type="button" class="status-filter" data-filter="invoiced">Invoiced</button>
-                    <button type="button" class="status-filter" data-filter="proforma">Proforma Invoice</button>
-                    <button type="button" class="status-filter" data-filter="paid">Paid</button>
-                    <button type="button" class="status-filter" data-filter="overdue">Overdue</button>
+                    <button type="button" class="status-filter active" data-filter="all" data-types="all,quotation,invoice">All</button>
+                    <button type="button" class="status-filter" data-filter="draft" data-types="all,quotation,invoice">Draft</button>
+                    <button type="button" class="status-filter" data-filter="sent" data-types="all,quotation">Sent</button>
+                    <button type="button" class="status-filter" data-filter="viewed" data-types="all,quotation">Viewed</button>
+                    <button type="button" class="status-filter" data-filter="accepted" data-types="all,quotation">Accepted</button>
+                    <button type="button" class="status-filter" data-filter="invoiced" data-types="all,quotation">Invoiced</button>
+                    <button type="button" class="status-filter" data-filter="pending" data-types="all,invoice">Pending</button>
+                    <button type="button" class="status-filter" data-filter="proforma" data-types="all,invoice">Proforma Invoice</button>
+                    <button type="button" class="status-filter" data-filter="paid" data-types="all,invoice">Paid</button>
+                    <button type="button" class="status-filter" data-filter="overdue" data-types="all,invoice">Overdue</button>
                 </div>
 
                 <div class="card invoice-table-card">
